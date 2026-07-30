@@ -6,13 +6,13 @@
 /*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:43 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/07/28 18:35:22 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/07/30 18:53:59 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../incs/ft_irc.hpp"
 
-void	server(char *port)
+void	server(char *port, Client clients)
 {
 	int ServerSocket = socket(AF_INET, SOCK_STREAM, 0);
 	if (ServerSocket < 0)
@@ -55,12 +55,13 @@ void	server(char *port)
 			}
 			if (fd == ServerSocket)
 			{
-				int client = accept(ServerSocket, NULL, NULL);
-				std::cout << "NEW USER JOINED\n";
+				int client_fd = accept(ServerSocket, NULL, NULL);
+				std::cout << "NEW USER JOINED"  << std::endl;
 				epoll_event ev;
 				ev.events = EPOLLIN;
-				ev.data.fd = client;
-				epoll_ctl(epfd, EPOLL_CTL_ADD, client, &ev);
+				ev.data.fd = client_fd;
+				clients.add_client(client_fd);
+				epoll_ctl(epfd, EPOLL_CTL_ADD, client_fd, &ev);
 			}
 			else
 			{
@@ -68,16 +69,17 @@ void	server(char *port)
 				int bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
 				if (bytes <= 0) 
 				{
-					std::cout << "USER DISCONNECTED\n"; 
+					std::cout << "USER DISCONNECTED" << std::endl; 
 					epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL);
+					// clients.remove_client(fd);
 					close(fd);
-					// _cli.removeCli(fd);
 				}
 				else 
 				{
 					buffer[bytes] = '\0';
-					std::cout << buffer;
-					// _cli.clientRead(fd, buffer, bytes);
+					// std::cout << "Server: " << buffer;
+					std::string str(buffer);
+					clients.read_buffer(str,fd);
         		}
 				// buffer = 0;
 			}
@@ -86,6 +88,24 @@ void	server(char *port)
 	close(ServerSocket);
 }
 
+bool parseword(char *av)
+{
+	std::string pass(av);
+
+	if(pass.empty())
+		return(false);
+	if(pass.size() > 64)
+		std::cerr << "Error: Server Password too massive" << std::endl;
+	for(size_t i = 0;i < pass.size();i++)
+	{
+		if(!isalnum(pass[i]))
+		{
+			std::cerr << "Error: Invalid password must be alpha numeric" << std::endl;
+			return(false);
+		}
+	}
+	return (true);
+}
 int main(int ac, char *av[])
 {
 	if(ac != 3)
@@ -95,7 +115,10 @@ int main(int ac, char *av[])
 	}
 	try
 	{
-		server(av[1]);
+		if(!parseword(av[2]))
+			return(1);
+		Client clients(av[2]);
+		server(av[1],clients);
 
 	}
 	catch(const std::exception& e)
