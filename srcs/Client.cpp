@@ -6,7 +6,7 @@
 /*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/07/30 19:01:29 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/05 17:17:02 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,9 @@ void Client::add_client(int fd)
 	t_client client;
 	client.fd = fd;
 	client.registered = false;
+	client.c_pass = false;
+	client.nick.finished = false;
+	client.user.finished = false;
 	this->_clients.insert(std::make_pair(fd,client));
 }
 
@@ -51,24 +54,39 @@ void	Client::sendHelp(t_client clt)
 	}
 }
 
-void	Client::handle_pass(std::vector<std::string> split_msg,t_client clt)
+void	Client::handle_pass(std::vector<std::string> split_msg,t_client &clt)
 {
-	(void)split_msg;
-	(void)clt;
 	std::cout << "HERE\n";
+	send_server_msg(clt.fd, "BANANAmake");
+	if (clt.c_pass == true)
+	{
+		send_server_msg(clt.fd, "Already logged in");
+		return ;
+	}
+	if (split_msg[1] != this->s_pass)
+	{
+		send_server_msg(clt.fd,"Invalid password");
+		return ;
+	}
+	send_server_msg(clt.fd, "Successfully logged in");
+	clt.c_pass = true;
 }
 
-bool Client::handle_register(std::string command,t_client clt)
+bool Client::handle_command(std::string command,t_client &clt)
 {
 	std::vector<std::string> split_msg;
 	split_msg = split_char(command,' ');
 	std::cout << "Msg size: " << split_msg.size() << std::endl;
-
+	for(size_t i = 0;i < split_msg.size(); i++)
+	{
+		std::cout << "args: " << split_msg[i] << std::endl;
+	}
 	if(split_msg[0] == "HELP")
 	{
 		if(split_msg.size() != 1)
-			std::cout <<"Unknown command, try [HELP]" << std::endl;
-		sendHelp(clt);
+			send_server_msg(clt.fd, "Unknown command, try [HELP]");
+		else
+			sendHelp(clt);
 	}
 	else if (split_msg[0] == "PASS")
 		handle_pass(split_msg,clt); 
@@ -81,23 +99,29 @@ bool Client::handle_register(std::string command,t_client clt)
 	// else if (split_msg[0] == "KICK")
 	// else if (split_msg[0] == "USER")
 	// else if (split_msg[0] == "USER")
-	std::cout << "!!" << split_msg[0] << "!!" << std::endl;
+	std::cout << "splitmsg !!" << split_msg[0] << "!!" << std::endl;
 	return true;
 }
 
-void Client::read_buffer(std::string buffer,int fd)
+void Client::read_buffer(char *buffer,int fd, int bytes)
 {
-	// std::cout << "banana\n";
-	t_client clt;
-
 	std::vector<std::string> commands;
-	clt = this->_clients.at(fd);
-	commands = split_string(buffer,"\r\n");
+	t_client &clt = this->_clients.at(fd);
+	clt.buffer.append(buffer, bytes);
+	std::cout << "REAL BUFFER LOL " << clt.buffer << std::endl;
+	if (clt.buffer.find("\r\n") == std::string::npos)
+		return;
+	commands = split_string(clt.buffer, "\r\n");
+	if (commands[0].empty())
+	{
+		clt.buffer.erase(clt.buffer.begin(),clt.buffer.end());
+		return;
+	}
 	std::cout << "command size: " << commands.size() << std::endl;
 	for(size_t i = 0;i < commands.size();i++)
 	{
 		std::cout << "Command: " << commands.at(i) << std::endl;
-		this->handle_register(commands[i],clt);
+		this->handle_command(commands[i],clt);
 	}
-	
+	clt.buffer.erase(clt.buffer.begin(),clt.buffer.end());
 }

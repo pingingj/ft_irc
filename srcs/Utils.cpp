@@ -6,7 +6,7 @@
 /*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/30 16:27:19 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/07/30 18:14:27 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/05 17:21:59 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,10 @@ std::vector<std::string> split_char(const std::string &s, char delim)
     std::stringstream ss (s);
     std::string item;
 
-    while (getline (ss, item, delim)) {
+    while (getline (ss, item, delim)) 
+	{
+		if(item.empty())
+			continue;
         result.push_back (item);
     }
 

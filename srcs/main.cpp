@@ -6,7 +6,7 @@
 /*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:43 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/07/30 18:53:59 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/05 17:05:28 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,15 +71,18 @@ void	server(char *port, Client clients)
 				{
 					std::cout << "USER DISCONNECTED" << std::endl; 
 					epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL);
-					// clients.remove_client(fd);
 					close(fd);
 				}
 				else 
 				{
 					buffer[bytes] = '\0';
 					// std::cout << "Server: " << buffer;
-					std::string str(buffer);
-					clients.read_buffer(str,fd);
+					clients.read_buffer(buffer,fd, bytes);
+					// for(int i = 0;i < bytes;i++)
+					// {
+					// 	buffer[i] = '\0';
+					// }
+					
         		}
 				// buffer = 0;
 			}
