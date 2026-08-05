@@ -6,7 +6,7 @@
 /*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:43 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/05 17:05:28 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/05 17:59:42 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,7 +69,8 @@ void	server(char *port, Client clients)
 				int bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
 				if (bytes <= 0) 
 				{
-					std::cout << "USER DISCONNECTED" << std::endl; 
+					std::cout << "USER DISCONNECTED" << std::endl;
+					// clients.remove_client
 					epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL);
 					close(fd);
 				}
@@ -96,7 +97,10 @@ bool parseword(char *av)
 	std::string pass(av);
 
 	if(pass.empty())
+	{
+		std::cerr << "Error: Empty server password" << std::endl;
 		return(false);
+	}
 	if(pass.size() > 64)
 		std::cerr << "Error: Server Password too massive" << std::endl;
 	for(size_t i = 0;i < pass.size();i++)

@@ -6,7 +6,7 @@
 /*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/05 17:17:02 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/05 17:57:26 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,6 +72,29 @@ void	Client::handle_pass(std::vector<std::string> split_msg,t_client &clt)
 	clt.c_pass = true;
 }
 
+void	Client::handle_user(std::vector<std::string> split_msg,t_client &clt)
+{
+	if (clt.c_pass == false)
+	{
+		send_server_msg(clt.fd, "You must join the server (password)");
+		return ;
+	}
+	if (clt.user.finished == true)
+	{
+		send_server_msg(clt.fd, "Can't change user");
+		return ;
+	}
+	if (this->_users.find(split_msg[1]) != this->_users.end())
+	{
+		send_server_msg(clt.fd, "User already in use");
+		return ;
+	}
+	send_server_msg(clt.fd, "User set");
+	clt.user.string = split_msg[1];
+	this->_users.insert(split_msg[1]);
+	clt.user.finished = true;
+}
+
 bool Client::handle_command(std::string command,t_client &clt)
 {
 	std::vector<std::string> split_msg;
@@ -90,7 +113,10 @@ bool Client::handle_command(std::string command,t_client &clt)
 	}
 	else if (split_msg[0] == "PASS")
 		handle_pass(split_msg,clt); 
-		
+	else if (split_msg[0] == "USER")
+		handle_user(split_msg, clt);
+	else
+		send_server_msg(clt.fd, "Unknown command");
 	// else if (split_msg[0] == "USER")
 		
 	// else if (split_msg[0] == "NICK")

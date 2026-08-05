@@ -6,7 +6,7 @@
 /*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:47 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/05 17:07:41 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/05 17:48:25 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@
 #include <vector>
 #include <sstream>
 #include <cctype>
+#include <set>
 
 typedef struct s_reg
 {
@@ -48,9 +49,11 @@ class Client
 	private:
 		std::string s_pass;
 		std::map<int, t_client> _clients;
+		std::set<std::string> _users;
 		bool handle_command(std::string command,t_client &clt);
 		void sendHelp(t_client clt);
 		void handle_pass(std::vector<std::string> split_msg,t_client &clt);
+		void handle_user(std::vector<std::string> split_msg,t_client &clt);
 
 	public:
 		Client();
