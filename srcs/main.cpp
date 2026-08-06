@@ -6,11 +6,19 @@
 /*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:43 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/05 17:59:42 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/06 15:36:08 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../incs/ft_irc.hpp"
+
+bool g_exit_flag = false;
+
+void	action_handler(int signal)
+{
+	if (signal == SIGINT)
+		g_exit_flag = true;
+}
 
 void	server(char *port, Client clients)
 {
@@ -35,6 +43,12 @@ void	server(char *port, Client clients)
 	epoll_ctl(epfd, EPOLL_CTL_ADD,ServerSocket, &Server);
 	while(true)
 	{
+		if(g_exit_flag == true)
+		{
+			close(epfd);
+			close(ServerSocket);
+			return ;
+		}
 		epoll_event events[64];
 		int n = epoll_wait(epfd, events, 64, -1);//wait or fd to have an event
 		if(n < 0)
@@ -70,22 +84,16 @@ void	server(char *port, Client clients)
 				if (bytes <= 0) 
 				{
 					std::cout << "USER DISCONNECTED" << std::endl;
-					// clients.remove_client
 					epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL);
-					close(fd);
+					clients.remove_client(fd);
 				}
 				else 
 				{
 					buffer[bytes] = '\0';
 					// std::cout << "Server: " << buffer;
 					clients.read_buffer(buffer,fd, bytes);
-					// for(int i = 0;i < bytes;i++)
-					// {
-					// 	buffer[i] = '\0';
-					// }
 					
-        		}
-				// buffer = 0;
+				}
 			}
 		}
 	}
@@ -124,9 +132,13 @@ int main(int ac, char *av[])
 	{
 		if(!parseword(av[2]))
 			return(1);
+		struct sigaction sign;
+		sign.sa_handler = &action_handler;
+		sign.sa_flags = 0;
+		sigemptyset(&sign.sa_mask);
+		sigaction(SIGINT, &sign, NULL);
 		Client clients(av[2]);
 		server(av[1],clients);
-
 	}
 	catch(const std::exception& e)
 	{
