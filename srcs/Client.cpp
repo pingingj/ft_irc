@@ -6,7 +6,7 @@
 /*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/06 16:00:19 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/06 19:24:35 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,11 +14,6 @@
 
 Client::Client()
 {
-}
-
-Client::Client(std::string server_password)
-{
-	this->s_pass = server_password;
 }
 
 Client::~Client()
@@ -36,6 +31,7 @@ void Client::add_client(int fd)
 	client.c_pass = false;
 	client.nick.finished = false;
 	client.user.finished = false;
+	client.in_channel = false;
 	this->_clients.insert(std::make_pair(fd, client));
 }
 
@@ -68,7 +64,7 @@ void Client::sendHelp(t_client clt)
 	}
 }
 
-void Client::handle_pass(std::vector<std::string> split_msg, t_client &clt)
+void Client::handle_pass(std::vector<std::string> split_msg, t_client &clt, std::string s_pass)
 {
 	std::cout << "HERE\n";
 	if (clt.c_pass == true)
@@ -76,7 +72,7 @@ void Client::handle_pass(std::vector<std::string> split_msg, t_client &clt)
 		send_server_msg(clt.fd, "Already logged in");
 		return ;
 	}
-	if (split_msg[1] != this->s_pass)
+	if (split_msg[1] != s_pass)
 	{
 		send_server_msg(clt.fd, "Invalid password");
 		return ;
@@ -144,7 +140,7 @@ void Client::handle_nick(std::vector<std::string> split_msg, t_client &clt)
 	clt.registered = true;
 }
 
-bool Client::handle_command(std::string command, t_client &clt)
+bool Server::handle_command(std::string command, t_client &clt)
 {
 	std::vector<std::string> split_msg;
 	split_msg = split_char(command, ' ');
@@ -158,24 +154,30 @@ bool Client::handle_command(std::string command, t_client &clt)
 		if (split_msg.size() != 1)
 			send_server_msg(clt.fd, "Unknown command, try [HELP]");
 		else
-			sendHelp(clt);
+			this->_client.sendHelp(clt);
 	}
 	else if (split_msg[0] == "PASS")
-		handle_pass(split_msg, clt);
+		this->_client.handle_pass(split_msg, clt, _pass);
 	else if (split_msg[0] == "USER")
-		handle_user(split_msg, clt);
+		this->_client.handle_user(split_msg, clt);
 	else if (split_msg[0] == "NICK")
-		handle_nick(split_msg, clt);
+		this->_client.handle_nick(split_msg, clt);
+	// else if(clt.in_channel == true)
+		// Channel::channel_commands(clt);
 	else
 		send_server_msg(clt.fd, "Unknown command");
 	std::cout << "splitmsg !!" << split_msg[0] << "!!" << std::endl;
 	return (true);
 }
 
-void Client::read_buffer(char *buffer, int fd, int bytes)
+t_client &Client::get_client(int fd)
+{
+		return(this->_clients.at(fd));
+}
+void Server::read_buffer(char *buffer, int fd, int bytes)
 {
 	std::vector<std::string> commands;
-	t_client &clt = this->_clients.at(fd);
+	t_client &clt = this->_client.get_client(fd);
 	clt.buffer.append(buffer, bytes);
 	std::cout << "REAL BUFFER LOL " << clt.buffer << std::endl;
 	if (clt.buffer.find("\r\n") == std::string::npos)

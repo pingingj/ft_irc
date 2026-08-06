@@ -6,7 +6,7 @@
 /*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:43 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/06 15:36:08 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/06 19:25:55 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,36 @@ void	action_handler(int signal)
 		g_exit_flag = true;
 }
 
-void	server(char *port, Client clients)
+Server::Server()
+{
+	
+}
+
+Server::Server(std::string s_pass)
+{
+	this->_pass = s_pass;
+}
+
+Server::~Server()
+{
+	
+}
+
+Server::Server(const Server &obj)
+{
+	if(this != &obj)
+		return;
+	return;	
+}
+
+
+Server &Server::operator=(const Server &obj)
+{
+	(void)obj;
+	return (*this);
+}
+
+void	Server::server(char *port)
 {
 	int ServerSocket = socket(AF_INET, SOCK_STREAM, 0);
 	if (ServerSocket < 0)
@@ -74,7 +103,7 @@ void	server(char *port, Client clients)
 				epoll_event ev;
 				ev.events = EPOLLIN;
 				ev.data.fd = client_fd;
-				clients.add_client(client_fd);
+				this->_client.add_client(client_fd);
 				epoll_ctl(epfd, EPOLL_CTL_ADD, client_fd, &ev);
 			}
 			else
@@ -85,13 +114,13 @@ void	server(char *port, Client clients)
 				{
 					std::cout << "USER DISCONNECTED" << std::endl;
 					epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL);
-					clients.remove_client(fd);
+					this->_client.remove_client(fd);
 				}
 				else 
 				{
 					buffer[bytes] = '\0';
 					// std::cout << "Server: " << buffer;
-					clients.read_buffer(buffer,fd, bytes);
+					this->read_buffer(buffer,fd, bytes);
 					
 				}
 			}
@@ -137,8 +166,8 @@ int main(int ac, char *av[])
 		sign.sa_flags = 0;
 		sigemptyset(&sign.sa_mask);
 		sigaction(SIGINT, &sign, NULL);
-		Client clients(av[2]);
-		server(av[1],clients);
+		Server server(av[2]);
+		server.server(av[1]);
 	}
 	catch(const std::exception& e)
 	{

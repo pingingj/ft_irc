@@ -6,7 +6,7 @@
 /*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:47 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/06 16:02:56 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/06 19:26:16 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,28 +44,64 @@ typedef struct s_client
 	bool 	c_pass;
 	bool		registered;
 	int			fd;
+	bool in_channel;
 } t_client;
+
+typedef struct s_channel
+{
+	std::string name;
+	std::string topic;
+	bool invite_only;
+	bool topic_change;
+	bool password;
+	size_t user_limit; 
+} t_channel;
 
 class Client
 {
 	private:
-		std::string s_pass;
 		std::map<int, t_client> _clients;
 		std::set<std::string> _users;
-		bool handle_command(std::string command,t_client &clt);
-		void sendHelp(t_client clt);
-		void handle_pass(std::vector<std::string> split_msg,t_client &clt);
-		void handle_user(std::vector<std::string> split_msg,t_client &clt);
-		void handle_nick(std::vector<std::string> split_msg, t_client &clt);
 
 
 	public:
 		Client();
+		Client(const Client &obj);
+		Client &operator=(const Client &obj);
 		~Client();
-		Client(std::string server_password);
 		void add_client(int fd);
-		void read_buffer(char *buffer,int fd, int bytes);
+		t_client &get_client(int fd);
 		void remove_client(int fd);
+		void sendHelp(t_client clt);
+		void handle_pass(std::vector<std::string> split_msg, t_client &clt, std::string s_pass);
+		void handle_user(std::vector<std::string> split_msg,t_client &clt);
+		void handle_nick(std::vector<std::string> split_msg, t_client &clt);
+};
+
+
+class Channel
+{
+	private:
+		std::map<std::string,t_channel> channels;
+	public:
+		static void channel_commands(t_client clt);
+};
+
+class Server
+{
+	private:
+		std::string _pass;
+		Client _client;
+	public:
+		Server();
+		Server(std::string s_pass);
+		Server(const Server &obj);
+		Server &operator=(const Server &obj);
+		~Server();
+		void	server(char *port);
+		void	read_buffer(char *buffer,int fd, int bytes);
+		bool handle_command(std::string command,t_client &clt);
+
 };
 
 
