@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
+/*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/06 19:24:35 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/11 17:02:24 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,12 +14,28 @@
 
 Client::Client()
 {
+	
 }
+
 
 Client::~Client()
 {
 	for (std::map<int, t_client >::iterator it = this->_clients.begin(); it != this->_clients.end(); ++it)
 		close(it->first);
+}
+
+Client::Client(const Client &obj)
+{
+	if(this != &obj)
+		return;
+	return;	
+}
+
+
+Client &Client::operator=(const Client &obj)
+{
+	(void)obj;
+	return (*this);
 }
 
 void Client::add_client(int fd)
@@ -29,8 +45,8 @@ void Client::add_client(int fd)
 	client.fd = fd;
 	client.registered = false;
 	client.c_pass = false;
-	client.nick.finished = false;
-	client.user.finished = false;
+	client.nick.exists = false;
+	client.user.exists = false;
 	client.in_channel = false;
 	this->_clients.insert(std::make_pair(fd, client));
 }
@@ -43,12 +59,6 @@ void Client::remove_client(int fd)
 	close(fd);
 }
 
-void	send_server_msg(int fd, std::string msg)
-{
-	std::string res = msg + "\r\n";
-	std::string sys = "System: " + res;
-	send(fd, sys.c_str(), sys.size(), 0);
-}
 void Client::sendHelp(t_client clt)
 {
 	if (clt.registered == true)
@@ -72,6 +82,11 @@ void Client::handle_pass(std::vector<std::string> split_msg, t_client &clt, std:
 		send_server_msg(clt.fd, "Already logged in");
 		return ;
 	}
+	if (split_msg.size() < 2)
+	{
+		send_server_msg(clt.fd, "Missing password");
+		return ;
+	}
 	if (split_msg[1] != s_pass)
 	{
 		send_server_msg(clt.fd, "Invalid password");
@@ -88,13 +103,18 @@ void Client::handle_user(std::vector<std::string> split_msg, t_client &clt)
 		send_server_msg(clt.fd, "You must join the server (password)");
 		return ;
 	}
+	if (split_msg.size() < 2)
+	{
+		send_server_msg(clt.fd, "Missing username");
+		return ;
+	}
 	if (split_msg[1] == "CHECK")
 	{
 		send_server_msg(clt.fd, "Your current USERNAME is ");
 		send_server_msg(clt.fd, clt.user.string);
 		return ;
 	}
-	if (clt.user.finished == true)
+	if (clt.user.exists == true)
 	{
 		send_server_msg(clt.fd, "Can't change user");
 		return ;
@@ -107,7 +127,7 @@ void Client::handle_user(std::vector<std::string> split_msg, t_client &clt)
 	send_server_msg(clt.fd, "User set");
 	clt.user.string = split_msg[1];
 	this->_users.insert(split_msg[1]);
-	clt.user.finished = true;
+	clt.user.exists = true;
 }
 
 void Client::handle_nick(std::vector<std::string> split_msg, t_client &clt)
@@ -117,7 +137,12 @@ void Client::handle_nick(std::vector<std::string> split_msg, t_client &clt)
 		send_server_msg(clt.fd, "You must join the server (password)");
 		return ;
 	}
-	if (clt.user.finished == false)
+	if (split_msg.size() < 2)
+	{
+		send_server_msg(clt.fd, "Missing nickname");
+		return ;
+	}
+	if (clt.user.exists == false)
 	{
 		send_server_msg(clt.fd, "You must have a USERNAME first");
 		return ;
@@ -128,7 +153,7 @@ void Client::handle_nick(std::vector<std::string> split_msg, t_client &clt)
 		send_server_msg(clt.fd, clt.nick.string);
 		return ;
 	}
-	if (clt.nick.finished == true)
+	if (clt.nick.exists == true)
 	{
 		send_server_msg(clt.fd, "NICKNAME successfully changed");
 		clt.nick.string = split_msg[1];
@@ -136,7 +161,7 @@ void Client::handle_nick(std::vector<std::string> split_msg, t_client &clt)
 	}
 	send_server_msg(clt.fd, "Nick set");
 	clt.nick.string = split_msg[1];
-	clt.nick.finished = true;
+	clt.nick.exists = true;
 	clt.registered = true;
 }
 
@@ -162,8 +187,10 @@ bool Server::handle_command(std::string command, t_client &clt)
 		this->_client.handle_user(split_msg, clt);
 	else if (split_msg[0] == "NICK")
 		this->_client.handle_nick(split_msg, clt);
+	else if (split_msg[0] == "JOIN")
+		this->_channel.handle_join(split_msg, clt);	
 	// else if(clt.in_channel == true)
-		// Channel::channel_commands(clt);
+	// 	Channel::channel_commands(clt);
 	else
 		send_server_msg(clt.fd, "Unknown command");
 	std::cout << "splitmsg !!" << split_msg[0] << "!!" << std::endl;

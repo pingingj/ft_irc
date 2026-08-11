@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
+/*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/30 16:27:19 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/05 17:21:59 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/11 15:20:56 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,4 +44,11 @@ std::vector<std::string> split_char(const std::string &s, char delim)
     }
 
     return result;
+}
+
+void	send_server_msg(int fd, std::string msg)
+{
+	std::string res = msg + "\r\n";
+	std::string sys = "Server: " + res;
+	send(fd, sys.c_str(), sys.size(), 0);
 }
