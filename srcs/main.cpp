@@ -6,7 +6,7 @@
 /*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:43 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/11 14:51:12 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/19 16:04:46 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -112,6 +112,9 @@ void	Server::server(char *port)
 				int bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
 				if (bytes <= 0) 
 				{
+					t_client &clt = this->_client.get_client(fd);
+					clt.disconnected = true;
+					this->_channel.disconnect_channels(clt);
 					std::cout << "USER DISCONNECTED" << std::endl;
 					epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL);
 					this->_client.remove_client(fd);

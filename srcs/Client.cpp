@@ -6,7 +6,7 @@
 /*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/11 17:02:24 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/19 17:39:48 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ void Client::add_client(int fd)
 	client.c_pass = false;
 	client.nick.exists = false;
 	client.user.exists = false;
-	client.in_channel = false;
+	client.disconnected = false;
 	this->_clients.insert(std::make_pair(fd, client));
 }
 
@@ -87,6 +87,11 @@ void Client::handle_pass(std::vector<std::string> split_msg, t_client &clt, std:
 		send_server_msg(clt.fd, "Missing password");
 		return ;
 	}
+	if (split_msg.size() != 2)
+	{
+		send_server_msg(clt.fd, "Password is only 1 word");
+		return ;
+	}
 	if (split_msg[1] != s_pass)
 	{
 		send_server_msg(clt.fd, "Invalid password");
@@ -106,6 +111,16 @@ void Client::handle_user(std::vector<std::string> split_msg, t_client &clt)
 	if (split_msg.size() < 2)
 	{
 		send_server_msg(clt.fd, "Missing username");
+		return ;
+	}
+	if (split_msg.size() != 2)
+	{
+		send_server_msg(clt.fd, "Wrong format e.g: USER (username)");
+		return ;
+	}
+	if (str_isalnum(split_msg[1]) == false)
+	{
+		send_server_msg(clt.fd, "Username must be alpha numeric");
 		return ;
 	}
 	if (split_msg[1] == "CHECK")
@@ -140,6 +155,16 @@ void Client::handle_nick(std::vector<std::string> split_msg, t_client &clt)
 	if (split_msg.size() < 2)
 	{
 		send_server_msg(clt.fd, "Missing nickname");
+		return ;
+	}
+	if (split_msg.size() != 2)
+	{
+		send_server_msg(clt.fd, "Wrong format e.g: NICK (nickname)");
+		return ;
+	}
+	if (str_isalnum(split_msg[1]) == false)
+	{
+		send_server_msg(clt.fd, "Nickname must be alpha numeric");
 		return ;
 	}
 	if (clt.user.exists == false)
@@ -189,8 +214,8 @@ bool Server::handle_command(std::string command, t_client &clt)
 		this->_client.handle_nick(split_msg, clt);
 	else if (split_msg[0] == "JOIN")
 		this->_channel.handle_join(split_msg, clt);	
-	// else if(clt.in_channel == true)
-	// 	Channel::channel_commands(clt);
+	else if(clt.registered == true)
+		this->_channel.channel_commands(split_msg, clt, this->_channel);
 	else
 		send_server_msg(clt.fd, "Unknown command");
 	std::cout << "splitmsg !!" << split_msg[0] << "!!" << std::endl;

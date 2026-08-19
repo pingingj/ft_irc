@@ -6,7 +6,7 @@
 /*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:47 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/11 16:34:37 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/19 17:39:30 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,7 +45,7 @@ typedef struct s_client
 	bool 	c_pass;
 	bool	registered;
 	int		fd;
-	bool	in_channel;
+	bool	disconnected;
 	std::set<std::string> channels;
 } t_client;
 
@@ -92,8 +92,11 @@ class Channel
 		Channel(const Channel &obj);
 		Channel &operator=(const Channel &obj);
 		~Channel();
+		static void channel_commands(std::vector<std::string> split_msg, t_client &clt, Channel &chl);
+		void		disconnect_channels(t_client &clt);
 		void		handle_join(std::vector<std::string> split_msg, t_client &clt);
-		static void channel_commands(t_client clt);
+		void		handle_exit(std::string split_msg, t_client &clt);
+		void		handle_privmsg(std::vector<std::string> split_msg, t_client &clt);
 };
 
 class Server
@@ -117,6 +120,9 @@ std::vector<std::string> split_string(std::string s, std::string delimiter);
 
 std::vector<std::string> split_char(const std::string &s, char delim);
 
+bool	str_isalnum(std::string &str);
+
 void	send_server_msg(int fd, std::string msg);
 
+void	send_msg(int fd, std::string msg, int flag);
 #endif

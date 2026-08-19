@@ -6,7 +6,7 @@
 /*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/30 16:27:19 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/11 15:20:56 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/19 17:34:00 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,8 +42,29 @@ std::vector<std::string> split_char(const std::string &s, char delim)
 			continue;
         result.push_back (item);
     }
-
     return result;
+}
+bool	str_isalnum(std::string &str)
+{
+	for(size_t i = 0; i < str.size(); i++)
+	{
+		if (std::isalnum(str[i]) == false)
+			return (false);
+	}
+	return (true);
+}
+
+void	send_msg(int fd, std::string msg, int flag)
+{
+	static std::string res;
+	if (flag == 1)
+		res += msg;
+	if (flag == 2)
+	{
+		res += msg + "\r\n";
+		send(fd, res.c_str(), res.size(), 0);
+		res.clear();
+	}
 }
 
 void	send_server_msg(int fd, std::string msg)
