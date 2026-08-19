@@ -6,7 +6,7 @@
 #    By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/14 16:42:33 by dgarcez-          #+#    #+#              #
-#    Updated: 2026/08/11 15:37:35 by dgarcez-         ###   ########.fr        #
+#    Updated: 2026/08/19 17:52:08 by dgarcez-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,7 +15,7 @@ NAME = ircserv
 CC = c++
 CFLAGS = -Wall -Wextra -Werror -g -std=c++98
 
-SOURCES =	main.cpp Client.cpp Utils.cpp Channel.cpp
+SOURCES =	Server.cpp Client.cpp Utils.cpp Channel.cpp
 
 SRCS_DIR = srcs
 SRCS =	$(addprefix $(SRCS_DIR)/, $(SOURCES))
