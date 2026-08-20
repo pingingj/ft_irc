@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
+/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/19 17:39:48 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/20 18:33:12 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,7 +54,7 @@ void Client::add_client(int fd)
 void Client::remove_client(int fd)
 {
 	t_client &clt = this->_clients.at(fd);
-	_users.erase(clt.user.string);
+	_nicks.erase(clt.user.string);
 	_clients.erase(clt.fd);
 	close(fd);
 }
@@ -69,8 +69,8 @@ void Client::sendHelp(t_client clt)
 	{
 		send_server_msg(clt.fd,"User is not registered!\nFollow these steps to register:");
 		send_server_msg(clt.fd,"Step 1: Enter server password with [PASS (server_password)] ");
-		send_server_msg(clt.fd,"Step 2: Enter a unique user name with [USER (your_username)] ");
-		send_server_msg(clt.fd,"Step 3: Enter a nickname with [NICK (your_nickname)] ");
+		send_server_msg(clt.fd,"Step 2: Enter a unique nick name with [NICK (your_nickname)] ");
+		send_server_msg(clt.fd,"Step 3: Enter a username with [USER (your_username)] ");
 	}
 }
 
@@ -108,14 +108,9 @@ void Client::handle_user(std::vector<std::string> split_msg, t_client &clt)
 		send_server_msg(clt.fd, "You must join the server (password)");
 		return ;
 	}
-	if (split_msg.size() < 2)
+	if (split_msg.size() < 5 || split_msg[4][0] != ':')
 	{
-		send_server_msg(clt.fd, "Missing username");
-		return ;
-	}
-	if (split_msg.size() != 2)
-	{
-		send_server_msg(clt.fd, "Wrong format e.g: USER (username)");
+		send_server_msg(clt.fd, "Wrong format e.g: USER <username> <hostname> <servername> : <real name>");
 		return ;
 	}
 	if (str_isalnum(split_msg[1]) == false)
@@ -134,14 +129,9 @@ void Client::handle_user(std::vector<std::string> split_msg, t_client &clt)
 		send_server_msg(clt.fd, "Can't change user");
 		return ;
 	}
-	if (this->_users.find(split_msg[1]) != this->_users.end())
-	{
-		send_server_msg(clt.fd, "User already in use");
-		return ;
-	}
 	send_server_msg(clt.fd, "User set");
 	clt.user.string = split_msg[1];
-	this->_users.insert(split_msg[1]);
+	this->_nicks.insert(split_msg[1]);
 	clt.user.exists = true;
 }
 
@@ -167,11 +157,6 @@ void Client::handle_nick(std::vector<std::string> split_msg, t_client &clt)
 		send_server_msg(clt.fd, "Nickname must be alpha numeric");
 		return ;
 	}
-	if (clt.user.exists == false)
-	{
-		send_server_msg(clt.fd, "You must have a USERNAME first");
-		return ;
-	}
 	if (split_msg[1] == "CHECK")
 	{
 		send_server_msg(clt.fd, "Your current NICKNAME is ");
@@ -184,9 +169,40 @@ void Client::handle_nick(std::vector<std::string> split_msg, t_client &clt)
 		clt.nick.string = split_msg[1];
 		return;
 	}
+	if (split_msg[1].size() > 9)
+	{
+		send_server_msg(clt.fd, "NICKNAME too massive");
+		clt.nick.string = split_msg[1];
+		return;
+	}
+	if (this->_nicks.find(split_msg[1]) != this->_nicks.end())
+	{
+		send_server_msg(clt.fd, "User already in use");
+		return ;
+	}
 	send_server_msg(clt.fd, "Nick set");
 	clt.nick.string = split_msg[1];
 	clt.nick.exists = true;
+	clt.registered = true;
+}
+
+void Client::handle_fast(t_client &clt)
+{
+	clt.c_pass = true;
+	clt.nick.exists = true;
+	clt.user.exists = true;
+	clt.nick.string = "nick1";
+	clt.user.string = "user1";
+	clt.registered = true;
+}
+
+void Client::handle_fast2(t_client &clt)
+{
+	clt.c_pass = true;
+	clt.nick.exists = true;
+	clt.user.exists = true;
+	clt.nick.string = "nick2";
+	clt.user.string = "user2";
 	clt.registered = true;
 }
 
@@ -206,6 +222,10 @@ bool Server::handle_command(std::string command, t_client &clt)
 		else
 			this->_client.sendHelp(clt);
 	}
+	else if (split_msg[0] == "FAST1")
+		this->_client.handle_fast(clt);
+	else if (split_msg[0] == "FAST2")
+		this->_client.handle_fast2(clt);
 	else if (split_msg[0] == "PASS")
 		this->_client.handle_pass(split_msg, clt, _pass);
 	else if (split_msg[0] == "USER")

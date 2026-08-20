@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
+/*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
+/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:43 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/19 16:04:46 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/20 18:02:51 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,7 +62,10 @@ void	Server::server(char *port)
 	if (setsockopt(ServerSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)//make it so wh we lose the server we can open again faster
 		throw std::runtime_error("Error: Setsockopt failed");
 	if (bind(ServerSocket, (struct sockaddr *)&ServerAddr, sizeof(ServerAddr)) < 0)//bind the port so ony one server at a time
+	{
+		close(ServerSocket);
 		throw std::runtime_error("Error: Bind failed\n");
+	}
 	if (listen(ServerSocket, 5) < 0)//waits for stuff to happen to the server
 		throw std::runtime_error("Error: Listen failed\n");
 	int epfd = epoll_create1(0);
@@ -110,7 +113,9 @@ void	Server::server(char *port)
 			{
 				char buffer[1024];
 				int bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
-				if (bytes <= 0) 
+				if(bytes > 512)
+					send_server_msg(fd,"Message to big");
+				else if (bytes <= 0) 
 				{
 					t_client &clt = this->_client.get_client(fd);
 					clt.disconnected = true;

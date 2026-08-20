@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
+/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/30 16:27:19 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/19 17:34:00 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/20 17:37:59 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,6 +57,8 @@ bool	str_isalnum(std::string &str)
 void	send_msg(int fd, std::string msg, int flag)
 {
 	static std::string res;
+	if(flag == 0)
+		res += "Server: " + msg;
 	if (flag == 1)
 		res += msg;
 	if (flag == 2)

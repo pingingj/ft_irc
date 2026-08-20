@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_irc.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
+/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:47 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/19 17:39:30 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/20 18:24:46 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,19 @@
 #include <signal.h>
 #include <cstdlib>
 #include <algorithm>
+
+template <typename Container>
+void print_container(Container &cont)
+{
+    typename Container::iterator it = cont.begin();
+
+    while (it != cont.end())
+    {
+        std::cout << *it << " ";
+        ++it;
+    }
+    std::cout << std::endl;
+}
 
 typedef struct s_reg
 {
@@ -66,7 +79,7 @@ class Client
 {
 	private:
 		std::map<int, t_client> _clients;
-		std::set<std::string> _users;
+		std::set<std::string> _nicks;
 
 	public:
 		Client();
@@ -80,6 +93,8 @@ class Client
 		void handle_pass(std::vector<std::string> split_msg, t_client &clt, std::string s_pass);
 		void handle_user(std::vector<std::string> split_msg,t_client &clt);
 		void handle_nick(std::vector<std::string> split_msg, t_client &clt);
+		void handle_fast(t_client &clt);
+		void handle_fast2(t_client &clt);
 };
 
 
@@ -95,7 +110,7 @@ class Channel
 		static void channel_commands(std::vector<std::string> split_msg, t_client &clt, Channel &chl);
 		void		disconnect_channels(t_client &clt);
 		void		handle_join(std::vector<std::string> split_msg, t_client &clt);
-		void		handle_exit(std::string split_msg, t_client &clt);
+		void		handle_part(std::string split_msg, t_client &clt);
 		void		handle_privmsg(std::vector<std::string> split_msg, t_client &clt);
 };
 
