@@ -6,7 +6,7 @@
 /*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:47 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/21 15:21:00 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/21 18:11:51 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,7 +96,7 @@ class Client
 		void handle_fast(t_client &clt);
 		void handle_fast2(t_client &clt);
 		bool search_client_list(std::string str, t_client &clt, std::string msg);
-
+		int	 get_client_fd(std::string nick);
 };
 
 
@@ -116,6 +116,8 @@ class Channel
 		void		handle_join(std::vector<std::string> split_msg, t_client &clt);
 		void		handle_part(std::string split_msg, t_client &clt);
 		void		handle_privmsg(std::vector<std::string> split_msg, t_client &clt, std::string command);
+		void		handle_kick(std::vector<std::string> split_msg, t_client &clt);
+		void		send_channel_msg(std::string channel_name, t_client &clt, std::string msg);
 };
 
 class Server

@@ -6,7 +6,7 @@
 /*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/11 15:09:52 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/21 16:20:22 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/21 18:11:02 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -198,7 +198,7 @@ void Channel::handle_privmsg(std::vector<std::string> split_msg, t_client &clt, 
 	}
 	if (split_msg.size() < 3)
 	{
-		send_server_msg(clt.fd, "no message dumb");
+		send_server_msg(clt.fd, "Missing message");
 		return ;
 	}
 	if (split_msg[2][0] == ':')
@@ -227,14 +227,89 @@ void Channel::handle_privmsg(std::vector<std::string> split_msg, t_client &clt, 
 			continue;
 		}
 		std::set<int>::iterator fd_it;
+		std::string chop;
 		for (fd_it = this->channels[inoa[i]].clt_fds.begin(); fd_it != this->channels[inoa[i]].clt_fds.end(); ++fd_it)
 		{
-			std::string prefix = inoa[i] + ": " + clt.nick.string + "(@" + clt.user.string + "):";
+			chop = ": ";
+			if (this->channels[inoa[i]].admins.find(clt.fd) != this->channels[inoa[i]].admins.end())
+				chop += "@";
+			std::string prefix = inoa[i] + chop + clt.nick.string + "($" + clt.user.string + "):";
 			send_msg(*fd_it, prefix, 1);
 			send_msg(*fd_it, msg, 2);
 		}
 	}
-	
+}
+
+void	Channel::send_channel_msg(std::string channel_name, t_client &clt, std::string msg)
+{
+	std::set<int>::iterator fd_it;
+	std::string chop;
+	for (fd_it = this->channels[channel_name].clt_fds.begin(); fd_it != this->channels[channel_name].clt_fds.end(); ++fd_it)
+	{
+		chop = ": ";
+		if (this->channels[channel_name].admins.find(clt.fd) != this->channels[channel_name].admins.end())
+			chop += "@";
+		std::string prefix = channel_name + chop + clt.nick.string + "($" + clt.user.string + "):";
+		send_msg(*fd_it, prefix, 1);
+		send_msg(*fd_it, msg, 2);
+	}
+}
+
+void	Channel::handle_kick(std::vector<std::string> split_msg, t_client &clt)
+{
+	if (split_msg.size() < 2)
+	{
+		send_server_msg(clt.fd, "Missing channel name");
+		return ;
+	}
+	if (split_msg.size() < 3)
+	{
+		send_server_msg(clt.fd, "Missing nick to kick");
+		return ;
+	}
+	// if (split_msg[2][0] == ':')
+	// 	msg = msg.substr(msg.find(" :") + 2);
+	// else
+	// 	msg = split_msg[2];
+	std::vector<std::string> channel_names = split_char(split_msg[1], ',');
+	std::vector<std::string> nicknames = split_char(split_msg[2], ',');
+	for(size_t i = 0;i < channel_names.size();i++)
+	{
+		t_channel &chl = this->channels[channel_names[i]];
+		if (chl.admins.find(clt.fd) == chl.admins.end())
+		{
+			send_msg(clt.fd, "Not an admin in channel ", 0);
+			send_msg(clt.fd, channel_names[i], 1);
+			send_msg(clt.fd, " or doesn't exist", 2);
+			continue ;
+		}
+		for (size_t j = 0; j < nicknames.size(); j++)
+		{
+			int clt_fd = this->client_ptr->get_client_fd(nicknames[j]);
+			if (clt_fd == -1)
+			{
+				send_msg(clt.fd, "Nick ", 0);
+				send_msg(clt.fd, nicknames[j], 1);
+				send_msg(clt.fd, " doesn't exist", 2);
+				continue;
+			}
+			t_client &cur_nick = this->client_ptr->get_client(clt_fd);
+			if (cur_nick.channels.find(channel_names[i]) == cur_nick.channels.end())
+			{
+				send_msg(clt.fd, "Nick ", 0);
+				send_msg(clt.fd, nicknames[j], 1);
+				send_msg(clt.fd, " not in channel", 2);
+				continue;
+			}
+			std::string msg =  "Successfully kicked " +  nicknames[j] + " out of " + channel_names[i];
+			send_channel_msg(channel_names[i], clt, msg);
+			cur_nick.channels.erase(channel_names[i]);
+			this->channels[channel_names[i]].clt_counter--;
+			this->channels[channel_names[i]].clt_fds.erase(cur_nick.fd);
+			if (this->channels[channel_names[i]].admins.find(cur_nick.fd) != this->channels[channel_names[i]].admins.end())
+				this->channels[channel_names[i]].admins.erase(cur_nick.fd);
+		}
+	}
 }
 
 void Channel::channel_commands(std::vector<std::string> split_msg, t_client &clt, std::string command)
@@ -243,6 +318,8 @@ void Channel::channel_commands(std::vector<std::string> split_msg, t_client &clt
 		this->handle_part(split_msg[1], clt);
 	else if(split_msg[0] == "PRIVMSG")
 		this->handle_privmsg(split_msg, clt, command);
+	else if (split_msg[0] == "KICK")
+		this->handle_kick(split_msg, clt);
 	else
 		send_server_msg(clt.fd, "Unknown command");
 }

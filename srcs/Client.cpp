@@ -6,7 +6,7 @@
 /*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/21 15:20:42 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/21 17:44:17 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -246,7 +246,7 @@ bool Server::handle_command(std::string command, t_client &clt)
 
 t_client &Client::get_client(int fd)
 {
-		return(this->_clients.at(fd));
+	return(this->_clients.at(fd));
 }
 
 bool Client::search_client_list(std::string inoa, t_client &clt, std::string msg)
@@ -254,12 +254,20 @@ bool Client::search_client_list(std::string inoa, t_client &clt, std::string msg
 	std::map<std::string,int>::iterator it = this->_nicks.find(inoa);
 	if(it != this->_nicks.end())
 	{
-		std::string prefix = "PRIVMSG FROM - " + clt.nick.string + "(@" + clt.user.string + "):";
+		std::string prefix = "PRIVMSG FROM - " + clt.nick.string + "($" + clt.user.string + "):";
 		send_msg(it->second, prefix, 1);
 		send_msg(it->second, msg, 2);
 		return(true);
 	}
 	return(false);
+}
+
+int Client::get_client_fd(std::string nick)
+{
+	std::map<std::string,int>::iterator it = this->_nicks.find(nick);
+	if(it != this->_nicks.end())
+		return(it->second);
+	return(-1);
 }
 void Server::read_buffer(char *buffer, int fd, int bytes)
 {
