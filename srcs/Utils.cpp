@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/30 16:27:19 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/20 17:37:59 by dpaes-so         ###   ########.fr       */
+/*   Updated: 2026/08/21 16:24:36 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,6 @@ std::vector<std::string> split_string(std::string s, std::string delimiter)
     return res;
 }
 
-
 std::vector<std::string> split_char(const std::string &s, char delim)
 {
     std::vector<std::string> result;
@@ -44,6 +43,7 @@ std::vector<std::string> split_char(const std::string &s, char delim)
     }
     return result;
 }
+
 bool	str_isalnum(std::string &str)
 {
 	for(size_t i = 0; i < str.size(); i++)

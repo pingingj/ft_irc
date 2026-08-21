@@ -6,7 +6,7 @@
 /*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/11 15:09:52 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/21 15:27:10 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/21 16:20:22 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -202,7 +202,7 @@ void Channel::handle_privmsg(std::vector<std::string> split_msg, t_client &clt, 
 		return ;
 	}
 	if (split_msg[2][0] == ':')
-		msg = msg.substr(msg.find(':') + 1);
+		msg = msg.substr(msg.find(" :") + 2);
 	else
 		msg = split_msg[2];
 	std::vector<std::string> inoa = split_char(split_msg[1],',');
