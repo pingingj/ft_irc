@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/21 14:56:26 by finn             ###   ########.fr       */
+/*   Updated: 2026/08/21 15:20:42 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -193,6 +193,7 @@ void Client::handle_fast(t_client &clt)
 	clt.user.exists = true;
 	clt.nick.string = "nick1";
 	clt.user.string = "user1";
+	this->_nicks.insert(std::make_pair(clt.nick.string,clt.fd));
 	clt.registered = true;
 }
 
@@ -203,6 +204,7 @@ void Client::handle_fast2(t_client &clt)
 	clt.user.exists = true;
 	clt.nick.string = "nick2";
 	clt.user.string = "user2";
+	this->_nicks.insert(std::make_pair(clt.nick.string,clt.fd));
 	clt.registered = true;
 }
 
@@ -235,7 +237,7 @@ bool Server::handle_command(std::string command, t_client &clt)
 	else if (split_msg[0] == "JOIN")
 		this->_channel.handle_join(split_msg, clt);	
 	else if(clt.registered == true)
-		this->_channel.channel_commands(split_msg, clt);
+		this->_channel.channel_commands(split_msg, clt, command);
 	else
 		send_server_msg(clt.fd, "Unknown command");
 	std::cout << "splitmsg !!" << split_msg[0] << "!!" << std::endl;
@@ -247,19 +249,14 @@ t_client &Client::get_client(int fd)
 		return(this->_clients.at(fd));
 }
 
-bool Client::search_client_list(std::string inoa,std::vector<std::string> split_msg, t_client &clt)
+bool Client::search_client_list(std::string inoa, t_client &clt, std::string msg)
 {
 	std::map<std::string,int>::iterator it = this->_nicks.find(inoa);
 	if(it != this->_nicks.end())
 	{
-		std::string prefix = clt.nick.string + "(@" + clt.user.string + "):";
+		std::string prefix = "PRIVMSG FROM - " + clt.nick.string + "(@" + clt.user.string + "):";
 		send_msg(it->second, prefix, 1);
-		for (size_t i = 2; i < split_msg.size() - 1; i++)
-		{
-			send_msg(it->second, split_msg[i], 1);
-			send_msg(it->second, " ", 1);
-		}
-		send_msg(it->second, split_msg.back(), 2);
+		send_msg(it->second, msg, 2);
 		return(true);
 	}
 	return(false);

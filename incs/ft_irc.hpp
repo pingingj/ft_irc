@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_irc.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:47 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/21 14:55:18 by finn             ###   ########.fr       */
+/*   Updated: 2026/08/21 15:21:00 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,7 +95,7 @@ class Client
 		void handle_nick(std::vector<std::string> split_msg, t_client &clt);
 		void handle_fast(t_client &clt);
 		void handle_fast2(t_client &clt);
-		bool search_client_list(std::string str,std::vector<std::string> split_msg, t_client &clt);
+		bool search_client_list(std::string str, t_client &clt, std::string msg);
 
 };
 
@@ -111,11 +111,11 @@ class Channel
 		Channel(const Channel &obj);
 		Channel &operator=(const Channel &obj);
 		~Channel();
-		void 		channel_commands(std::vector<std::string> split_msg, t_client &clt);
+		void 		channel_commands(std::vector<std::string> split_msg, t_client &clt, std::string command);
 		void		disconnect_channels(t_client &clt);
 		void		handle_join(std::vector<std::string> split_msg, t_client &clt);
 		void		handle_part(std::string split_msg, t_client &clt);
-		void		handle_privmsg(std::vector<std::string> split_msg, t_client &clt);
+		void		handle_privmsg(std::vector<std::string> split_msg, t_client &clt, std::string command);
 };
 
 class Server

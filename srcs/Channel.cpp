@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/11 15:09:52 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/21 15:17:46 by finn             ###   ########.fr       */
+/*   Updated: 2026/08/21 15:27:10 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -189,9 +189,9 @@ void	Channel::handle_part(std::string split_msg, t_client &clt)
 		send_server_msg(clt.fd, "Successfuly left the channel");
 }
 
-void Channel::handle_privmsg(std::vector<std::string> split_msg, t_client &clt)
+void Channel::handle_privmsg(std::vector<std::string> split_msg, t_client &clt, std::string msg)
 {
-	if (split_msg[1].size() < 2)
+	if (split_msg.size() < 2)
 	{
 		send_server_msg(clt.fd, "Missing channel name");
 		return ;
@@ -201,18 +201,29 @@ void Channel::handle_privmsg(std::vector<std::string> split_msg, t_client &clt)
 		send_server_msg(clt.fd, "no message dumb");
 		return ;
 	}
+	if (split_msg[2][0] == ':')
+		msg = msg.substr(msg.find(':') + 1);
+	else
+		msg = split_msg[2];
 	std::vector<std::string> inoa = split_char(split_msg[1],',');
 	for(size_t i = 0;i < inoa.size();i++)
 	{
 		if ((inoa[i].find("#") != std::string::npos|| inoa[i].find("&") != std::string::npos) && clt.channels.find(inoa[i]) == clt.channels.end())
 		{
-			send_server_msg(clt.fd, "Not in this channel or doesn't exist");
+			send_msg(clt.fd, "Not in channel ", 0);
+			send_msg(clt.fd, inoa[i], 1);
+			send_msg(clt.fd, " or doesn't exist", 2);
 			continue;
 		}
-		if(!inoa[i].find("#") && !inoa[i].find("&"))
+		if(inoa[i].find("#") == std::string::npos && inoa[i].find("&") == std::string::npos)
 		{
-			if(this->client_ptr->search_client_list(inoa[i],split_msg,clt) == false)
-				send_server_msg(clt.fd, "YOOOOOOOOOOOOOOOOO");
+
+			if(this->client_ptr->search_client_list(inoa[i], clt, msg) == false)
+			{
+				send_msg(clt.fd, "Nick ", 0);
+				send_msg(clt.fd, inoa[i], 1);
+				send_msg(clt.fd, " doesn't exist", 2);
+			}
 			continue;
 		}
 		std::set<int>::iterator fd_it;
@@ -220,23 +231,18 @@ void Channel::handle_privmsg(std::vector<std::string> split_msg, t_client &clt)
 		{
 			std::string prefix = inoa[i] + ": " + clt.nick.string + "(@" + clt.user.string + "):";
 			send_msg(*fd_it, prefix, 1);
-			for (size_t i = 2; i < split_msg.size() - 1; i++)
-			{
-				send_msg(*fd_it, split_msg[i], 1);
-				send_msg(*fd_it, " ", 1);
-			}
-			send_msg(*fd_it, split_msg.back(), 2);
+			send_msg(*fd_it, msg, 2);
 		}
 	}
-
+	
 }
 
-void Channel::channel_commands(std::vector<std::string> split_msg, t_client &clt)
+void Channel::channel_commands(std::vector<std::string> split_msg, t_client &clt, std::string command)
 {
 	if (split_msg[0] == "PART")
 		this->handle_part(split_msg[1], clt);
 	else if(split_msg[0] == "PRIVMSG")
-		this->handle_privmsg(split_msg, clt);
+		this->handle_privmsg(split_msg, clt, command);
 	else
 		send_server_msg(clt.fd, "Unknown command");
 }
