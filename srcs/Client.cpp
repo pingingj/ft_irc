@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
+/*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/20 18:33:12 by dpaes-so         ###   ########.fr       */
+/*   Updated: 2026/08/21 14:56:26 by finn             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -131,7 +131,7 @@ void Client::handle_user(std::vector<std::string> split_msg, t_client &clt)
 	}
 	send_server_msg(clt.fd, "User set");
 	clt.user.string = split_msg[1];
-	this->_nicks.insert(split_msg[1]);
+	this->_nicks.insert(std::make_pair(split_msg[1],clt.fd));
 	clt.user.exists = true;
 }
 
@@ -235,7 +235,7 @@ bool Server::handle_command(std::string command, t_client &clt)
 	else if (split_msg[0] == "JOIN")
 		this->_channel.handle_join(split_msg, clt);	
 	else if(clt.registered == true)
-		this->_channel.channel_commands(split_msg, clt, this->_channel);
+		this->_channel.channel_commands(split_msg, clt);
 	else
 		send_server_msg(clt.fd, "Unknown command");
 	std::cout << "splitmsg !!" << split_msg[0] << "!!" << std::endl;
@@ -245,6 +245,24 @@ bool Server::handle_command(std::string command, t_client &clt)
 t_client &Client::get_client(int fd)
 {
 		return(this->_clients.at(fd));
+}
+
+bool Client::search_client_list(std::string inoa,std::vector<std::string> split_msg, t_client &clt)
+{
+	std::map<std::string,int>::iterator it = this->_nicks.find(inoa);
+	if(it != this->_nicks.end())
+	{
+		std::string prefix = clt.nick.string + "(@" + clt.user.string + "):";
+		send_msg(it->second, prefix, 1);
+		for (size_t i = 2; i < split_msg.size() - 1; i++)
+		{
+			send_msg(it->second, split_msg[i], 1);
+			send_msg(it->second, " ", 1);
+		}
+		send_msg(it->second, split_msg.back(), 2);
+		return(true);
+	}
+	return(false);
 }
 void Server::read_buffer(char *buffer, int fd, int bytes)
 {
