@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_irc.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
+/*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:47 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/24 16:31:37 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/24 19:05:25 by finn             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,7 @@
 #include <signal.h>
 #include <cstdlib>
 #include <algorithm>
+#include <limits>
 
 template <typename Container>
 void print_container(Container &cont)
@@ -71,6 +72,7 @@ typedef struct s_channel
 	bool invite_only;
 	bool topic_change;
 	t_reg password;
+	bool user_limit_bool;
 	size_t user_limit;
 	size_t clt_counter;
 } t_channel;
@@ -120,7 +122,7 @@ class Channel
 		void		handle_topic(std::vector<std::string> split_msg, t_client &clt, std::string command);
 		void		handle_mode(std::vector<std::string> split_msg,t_client &clt);
 		void		send_channel_msg(std::string channel_name, t_client &clt, std::string msg);
-		bool		check_admin(t_channel &chl, t_client &clt);
+		bool		check_admin(t_channel &chl,size_t clt_fd);
 };
 
 class Server

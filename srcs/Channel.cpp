@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
+/*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/11 15:09:52 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/24 16:47:07 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/24 19:38:38 by finn             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,8 +91,9 @@ void Channel::handle_join(std::vector<std::string> split_msg, t_client &clt)
 		if (chl.name.empty())
 		{
 			chl.name = channel_nombres[i];
-			chl.invite_only = true;
-			chl.user_limit = 20;
+			chl.invite_only = false;
+			chl.user_limit_bool = false;
+			chl.user_limit = 0;
 			chl.topic_change = true;
 			chl.admins.insert(clt.fd);
 			chl.clt_fds.insert(clt.fd);
@@ -113,7 +114,14 @@ void Channel::handle_join(std::vector<std::string> split_msg, t_client &clt)
 		}
 		else
 		{
-			if (chl.clt_counter >= chl.user_limit)
+			if(chl.invite_only == true)
+			{
+				send_msg(clt.fd, " Channel is invite only",2);
+				if (channel_passaggio.size() > 0)
+					channel_passaggio.erase(channel_passaggio.begin());
+				continue ;
+			}
+			if (chl.user_limit_bool == true && chl.clt_counter >= chl.user_limit)
 			{
 				send_msg(clt.fd, " Channel user limit reached",2);
 				if (channel_passaggio.size() > 0)
@@ -168,7 +176,7 @@ void	Channel::handle_part(std::string split_msg, t_client &clt)
 	clt.channels.erase(split_msg);
 	this->channels[split_msg].clt_counter--;
 	this->channels[split_msg].clt_fds.erase(clt.fd);
-	if (this->check_admin(this->channels[split_msg], clt) == true)
+	if (this->check_admin(this->channels[split_msg], clt.fd) == true)
 	{
 		this->channels[split_msg].admins.erase(clt.fd);
 		if (this->channels[split_msg].admins.size() <= 0)
@@ -248,7 +256,7 @@ void	Channel::send_channel_msg(std::string channel_name, t_client &clt, std::str
 	for (fd_it = this->channels[channel_name].clt_fds.begin(); fd_it != this->channels[channel_name].clt_fds.end(); ++fd_it)
 	{
 		chop = ": ";
-		if (this->check_admin(this->channels[channel_name], clt) == true)
+		if (this->check_admin(this->channels[channel_name], clt.fd) == true)
 			chop += "@";
 		std::string prefix = channel_name + chop + clt.nick.string + "($" + clt.user.string + "):";
 		send_msg(*fd_it, prefix, 1);
@@ -278,7 +286,7 @@ void	Channel::handle_kick(std::vector<std::string> split_msg, t_client &clt, std
 	for(size_t i = 0;i < channel_names.size();i++)
 	{
 		t_channel &chl = this->channels[channel_names[i]];
-		if (this->check_admin(chl, clt) == false)
+		if (this->check_admin(chl, clt.fd) == false)
 		{
 			send_msg(clt.fd, "Not an admin in channel ", 0);
 			send_msg(clt.fd, channel_names[i], 1);
@@ -306,7 +314,7 @@ void	Channel::handle_kick(std::vector<std::string> split_msg, t_client &clt, std
 			cur_nick->channels.erase(channel_names[i]);
 			this->channels[channel_names[i]].clt_counter--;
 			this->channels[channel_names[i]].clt_fds.erase(cur_nick->fd);
-			if (this->check_admin(this->channels[channel_names[i]], *cur_nick) == true)
+			if (this->check_admin(this->channels[channel_names[i]], cur_nick->fd) == true)
 				this->channels[channel_names[i]].admins.erase(cur_nick->fd);
 		}
 	}
@@ -332,12 +340,12 @@ void	Channel::handle_topic(std::vector<std::string> split_msg, t_client &clt, st
 			topic = split_msg[2];
 	}
 	t_channel &chl = this->channels[split_msg[1]];
-	if (chl.name.empty())
+	if(chl.name.empty() || chl.clt_fds.find(clt.fd) == chl.clt_fds.end())
 	{
-		send_server_msg(clt.fd, "Channel doesn't exist");
+		send_server_msg(clt.fd, "Not in the channel");
 		return ;
 	}
-	if (chl.topic_change == false || this->check_admin(chl, clt) == false)
+	if (chl.topic_change == true && this->check_admin(chl, clt.fd) == false)
 	{
 		send_server_msg(clt.fd, "Can't change topic of channel");
 		return ;
@@ -360,29 +368,11 @@ void	Channel::handle_mode(std::vector<std::string> split_msg,t_client &clt)
 		send_server_msg(clt.fd, "Missing channel mode options to add or remove (+/-itkol)");
 		return ;
 	}
-	if (split_msg[3][0] == '+')
-		mode = true;
-	else if (split_msg[3][0] == '-')
-		mode = false;
-	else
+	// mode #42 +tlo-o 20
+	if(split_msg[2][0] != '+' && split_msg[2][0] != '-')
 	{
 		send_server_msg(clt.fd, "Channel options must start with + (enable) or - (disable)");
-		return ;
-	}
-	if (split_msg[3].find_first_not_of("+-itkol") != std::string::npos)
-	{
-		send_server_msg(clt.fd, "Not a recognized mode");
-		return ;
-	}
-	if (mode == true && split_msg.size() < 4)
-	{
-		send_server_msg(clt.fd, "Missing channel mode options to add or remove (+/-itkol)");
-		return ;
-	}
-	if (split_msg.size() > 5)
-	{
-		send_server_msg(clt.fd, "Too many arguments");
-		return ;
+		return;
 	}
 	t_channel &chl = this->channels[split_msg[1]];
 	if (chl.name.empty())
@@ -390,12 +380,105 @@ void	Channel::handle_mode(std::vector<std::string> split_msg,t_client &clt)
 		send_server_msg(clt.fd, "Channel doesn't exist");
 		return ;
 	}
-	if (this->check_admin(chl, clt) == false)
+	if (this->check_admin(chl, clt.fd) == false)
 	{
 		send_server_msg(clt.fd, "Can't change mode of channel");
 		return ;
 	}
-	if (split_msg < )
+	size_t j = 3;
+	for(size_t i = 0;i<  split_msg[2].size();i++)
+	{
+		if (split_msg[2][i] == '+')
+			mode = true;
+		else if (split_msg[2][i] == '-')
+			mode = false;
+		else
+		{
+			if(split_msg[2][i] == 'i')
+			{
+				chl.invite_only = mode;
+				if(mode == true)
+					send_channel_msg(chl.name,clt,"Channel is now invite only");
+				else
+					send_channel_msg(chl.name,clt,"Channel is now open");
+			}
+			else if(split_msg[2][i] == 't')
+				chl.topic_change = mode;
+			else if (split_msg[2][i] == 'k')
+			{
+				if(mode == true)
+				{
+					if(split_msg[j].empty() == true)
+					{
+						send_server_msg(clt.fd,"No password given");
+						continue;
+					}
+					chl.password.string = split_msg[j];
+					j++;
+				}
+				chl.password.exists = mode;
+			}
+			else if (split_msg[2][i] == 'o')
+			{
+				if(mode == true)
+				{
+					if(split_msg[j].empty() == false)
+					{
+						int clt_fd = this->client_ptr->get_client_fd(split_msg[j]);
+						if(check_admin(chl,clt_fd) == true)
+						{
+							send_msg(clt.fd,split_msg[j],0);
+							send_msg(clt.fd," is already an operator in channel ",1);
+							send_msg(clt.fd,chl.name,2);
+						}
+						chl.admins.insert(clt.fd);
+						send_msg(clt_fd,"You are now a operator in channel ",0);
+						send_msg(clt_fd,chl.name,2);
+						j++;
+					}
+				}
+				else
+				{
+					if(split_msg[j].empty() == false)
+					{
+						int clt_fd = this->client_ptr->get_client_fd(split_msg[j]);
+						if(check_admin(chl,clt_fd) == false)
+						{
+							send_msg(clt.fd,split_msg[j],0);
+							send_msg(clt.fd," is not an operator in channel ",1);
+							send_msg(clt.fd,chl.name,2);
+						}
+						chl.admins.erase(clt.fd);
+						send_msg(clt_fd,"You are no longer an operator in channel ",0);
+						send_msg(clt_fd,chl.name,2);
+						j++;
+					}
+				}
+			}
+			else if (split_msg[2][i] == 'l')
+			{
+				if(mode == true)
+				{
+					if(split_msg[j].empty() == false)
+					{
+						if(split_msg[j].find_first_not_of("0123456789") != std::string::npos)
+						{
+							send_server_msg(clt.fd,"Invalid limit amount");
+							j++;
+							continue;
+						}
+						long u_limit = atol(split_msg[j].c_str());
+						if(u_limit > std::numeric_limits<int>::max())
+							u_limit = std::numeric_limits<int>::max();
+						chl.user_limit = u_limit;
+					}
+				}
+				chl.user_limit_bool = mode;
+			}
+			else
+				send_server_msg(clt.fd, "Invalid channel mode");
+		}
+	}
 }
 
 void Channel::channel_commands(std::vector<std::string> split_msg, t_client &clt, std::string command)
@@ -425,9 +508,9 @@ void	Channel::disconnect_channels(t_client &clt)
 	}
 }
 
-bool	Channel::check_admin(t_channel &chl, t_client &clt)
+bool	Channel::check_admin(t_channel &chl,size_t clt_fd)
 {
-	if (chl.admins.find(clt.fd) == chl.admins.end())
+	if (chl.admins.find(clt_fd) == chl.admins.end())
 		return (false);
 	return (true);
 }
