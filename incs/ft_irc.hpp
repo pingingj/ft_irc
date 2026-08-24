@@ -6,7 +6,7 @@
 /*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:47 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/24 16:27:34 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/24 16:31:37 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -118,8 +118,8 @@ class Channel
 		void		handle_privmsg(std::vector<std::string> split_msg, t_client &clt, std::string command);
 		void		handle_kick(std::vector<std::string> split_msg, t_client &clt, std::string command);
 		void		handle_topic(std::vector<std::string> split_msg, t_client &clt, std::string command);
-		void		send_channel_msg(std::string channel_name, t_client &clt, std::string msg);
 		void		handle_mode(std::vector<std::string> split_msg,t_client &clt);
+		void		send_channel_msg(std::string channel_name, t_client &clt, std::string msg);
 		bool		check_admin(t_channel &chl, t_client &clt);
 };
 

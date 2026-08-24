@@ -6,7 +6,7 @@
 /*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/11 15:09:52 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/24 16:27:40 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/24 16:47:07 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -345,6 +345,57 @@ void	Channel::handle_topic(std::vector<std::string> split_msg, t_client &clt, st
 	chl.topic = topic;
 	std::string msg = " changed the channel " + split_msg[1] + " topic to:" + topic;
 	send_channel_msg(split_msg[1], clt, msg);
+}
+
+void	Channel::handle_mode(std::vector<std::string> split_msg,t_client &clt)
+{
+	bool	mode;
+	if (split_msg.size() < 2)
+	{
+		send_server_msg(clt.fd, "Missing channel name");
+		return ;
+	}
+	if (split_msg.size() < 3)
+	{
+		send_server_msg(clt.fd, "Missing channel mode options to add or remove (+/-itkol)");
+		return ;
+	}
+	if (split_msg[3][0] == '+')
+		mode = true;
+	else if (split_msg[3][0] == '-')
+		mode = false;
+	else
+	{
+		send_server_msg(clt.fd, "Channel options must start with + (enable) or - (disable)");
+		return ;
+	}
+	if (split_msg[3].find_first_not_of("+-itkol") != std::string::npos)
+	{
+		send_server_msg(clt.fd, "Not a recognized mode");
+		return ;
+	}
+	if (mode == true && split_msg.size() < 4)
+	{
+		send_server_msg(clt.fd, "Missing channel mode options to add or remove (+/-itkol)");
+		return ;
+	}
+	if (split_msg.size() > 5)
+	{
+		send_server_msg(clt.fd, "Too many arguments");
+		return ;
+	}
+	t_channel &chl = this->channels[split_msg[1]];
+	if (chl.name.empty())
+	{
+		send_server_msg(clt.fd, "Channel doesn't exist");
+		return ;
+	}
+	if (this->check_admin(chl, clt) == false)
+	{
+		send_server_msg(clt.fd, "Can't change mode of channel");
+		return ;
+	}
+	if (split_msg < )
 }
 
 void Channel::channel_commands(std::vector<std::string> split_msg, t_client &clt, std::string command)
