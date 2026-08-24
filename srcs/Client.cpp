@@ -6,7 +6,7 @@
 /*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/21 17:44:17 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/24 16:04:36 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -131,7 +131,6 @@ void Client::handle_user(std::vector<std::string> split_msg, t_client &clt)
 	}
 	send_server_msg(clt.fd, "User set");
 	clt.user.string = split_msg[1];
-	this->_nicks.insert(std::make_pair(split_msg[1],clt.fd));
 	clt.user.exists = true;
 }
 
@@ -177,12 +176,13 @@ void Client::handle_nick(std::vector<std::string> split_msg, t_client &clt)
 	}
 	if (this->_nicks.find(split_msg[1]) != this->_nicks.end())
 	{
-		send_server_msg(clt.fd, "User already in use");
+		send_server_msg(clt.fd, "Nick already in use");
 		return ;
 	}
 	send_server_msg(clt.fd, "Nick set");
 	clt.nick.string = split_msg[1];
 	clt.nick.exists = true;
+	this->_nicks.insert(std::make_pair(split_msg[1],clt.fd));
 	clt.registered = true;
 }
 
@@ -244,9 +244,11 @@ bool Server::handle_command(std::string command, t_client &clt)
 	return (true);
 }
 
-t_client &Client::get_client(int fd)
+t_client *Client::get_client(int fd)
 {
-	return(this->_clients.at(fd));
+	if (fd == -1)
+		return (NULL);
+	return(&this->_clients.at(fd));
 }
 
 bool Client::search_client_list(std::string inoa, t_client &clt, std::string msg)
@@ -264,6 +266,7 @@ bool Client::search_client_list(std::string inoa, t_client &clt, std::string msg
 
 int Client::get_client_fd(std::string nick)
 {
+	std::cout << "Searching " << nick << std::endl;
 	std::map<std::string,int>::iterator it = this->_nicks.find(nick);
 	if(it != this->_nicks.end())
 		return(it->second);
@@ -272,22 +275,22 @@ int Client::get_client_fd(std::string nick)
 void Server::read_buffer(char *buffer, int fd, int bytes)
 {
 	std::vector<std::string> commands;
-	t_client &clt = this->_client.get_client(fd);
-	clt.buffer.append(buffer, bytes);
-	std::cout << "REAL BUFFER LOL " << clt.buffer << std::endl;
-	if (clt.buffer.find("\r\n") == std::string::npos)
+	t_client *clt = this->_client.get_client(fd);
+	clt->buffer.append(buffer, bytes);
+	std::cout << "REAL BUFFER LOL " << clt->buffer << std::endl;
+	if (clt->buffer.find("\r\n") == std::string::npos)
 		return ;
-	commands = split_string(clt.buffer, "\r\n");
+	commands = split_string(clt->buffer, "\r\n");
 	if (commands[0].empty())
 	{
-		clt.buffer.erase(clt.buffer.begin(), clt.buffer.end());
+		clt->buffer.erase(clt->buffer.begin(), clt->buffer.end());
 		return ;
 	}
 	std::cout << "command size: " << commands.size() << std::endl;
 	for (size_t i = 0; i < commands.size(); i++)
 	{
 		std::cout << "Command: " << commands.at(i) << std::endl;
-		this->handle_command(commands[i], clt);
+		this->handle_command(commands[i], *clt);
 	}
-	clt.buffer.erase(clt.buffer.begin(), clt.buffer.end());
+	clt->buffer.erase(clt->buffer.begin(), clt->buffer.end());
 }

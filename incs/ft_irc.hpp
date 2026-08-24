@@ -6,7 +6,7 @@
 /*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:47 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/21 18:11:51 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/24 16:27:34 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,17 +86,17 @@ class Client
 		Client(const Client &obj);
 		Client &operator=(const Client &obj);
 		~Client();
-		void add_client(int fd);
-		t_client &get_client(int fd);
-		void remove_client(int fd);
-		void sendHelp(t_client clt);
-		void handle_pass(std::vector<std::string> split_msg, t_client &clt, std::string s_pass);
-		void handle_user(std::vector<std::string> split_msg,t_client &clt);
-		void handle_nick(std::vector<std::string> split_msg, t_client &clt);
-		void handle_fast(t_client &clt);
-		void handle_fast2(t_client &clt);
-		bool search_client_list(std::string str, t_client &clt, std::string msg);
-		int	 get_client_fd(std::string nick);
+		void		add_client(int fd);
+		t_client	*get_client(int fd);
+		void		remove_client(int fd);
+		void		sendHelp(t_client clt);
+		void		handle_pass(std::vector<std::string> split_msg, t_client &clt, std::string s_pass);
+		void		handle_user(std::vector<std::string> split_msg,t_client &clt);
+		void		handle_nick(std::vector<std::string> split_msg, t_client &clt);
+		void		handle_fast(t_client &clt);
+		void		handle_fast2(t_client &clt);
+		bool		search_client_list(std::string str, t_client &clt, std::string msg);
+		int			get_client_fd(std::string nick);
 };
 
 
@@ -116,8 +116,11 @@ class Channel
 		void		handle_join(std::vector<std::string> split_msg, t_client &clt);
 		void		handle_part(std::string split_msg, t_client &clt);
 		void		handle_privmsg(std::vector<std::string> split_msg, t_client &clt, std::string command);
-		void		handle_kick(std::vector<std::string> split_msg, t_client &clt);
+		void		handle_kick(std::vector<std::string> split_msg, t_client &clt, std::string command);
+		void		handle_topic(std::vector<std::string> split_msg, t_client &clt, std::string command);
 		void		send_channel_msg(std::string channel_name, t_client &clt, std::string msg);
+		void		handle_mode(std::vector<std::string> split_msg,t_client &clt);
+		bool		check_admin(t_channel &chl, t_client &clt);
 };
 
 class Server
