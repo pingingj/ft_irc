@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
+/*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/30 16:27:19 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/21 18:04:11 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/25 17:11:53 by finn             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,6 +67,12 @@ void	send_msg(int fd, std::string msg, int flag)
 		send(fd, res.c_str(), res.size(), 0);
 		res.clear();
 	}
+}
+
+void	send_msg_hex(int fd, std::string response)
+{
+	response += "\r\n";
+	send(fd, response.c_str(), response.size(), 0);
 }
 
 void	send_server_msg(int fd, std::string msg)

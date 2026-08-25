@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_irc.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
+/*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:47 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/25 15:04:53 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/25 17:29:38 by finn             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -123,7 +123,7 @@ class Channel
 		void		handle_invite(std::vector<std::string> split_msg, t_client &clt);
 		void		handle_topic(std::vector<std::string> split_msg, t_client &clt, std::string command);
 		void		handle_mode(std::vector<std::string> split_msg,t_client &clt);
-		void		send_channel_msg(std::string channel_name, t_client &clt, std::string msg);
+		void		send_channel_msg(std::string channel_name, t_client &clt, std::string msg,std::string command);
 		bool		check_admin(t_channel &chl,size_t clt_fd);
 };
 
@@ -151,6 +151,8 @@ std::vector<std::string> split_char(const std::string &s, char delim);
 bool	str_isalnum(std::string &str);
 
 void	send_server_msg(int fd, std::string msg);
+
+void	send_msg_hex(int fd, std::string response);
 
 void	send_msg(int fd, std::string msg, int flag);
 #endif

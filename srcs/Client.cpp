@@ -6,7 +6,7 @@
 /*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/24 18:28:34 by finn             ###   ########.fr       */
+/*   Updated: 2026/08/25 18:10:36 by finn             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -256,9 +256,8 @@ bool Client::search_client_list(std::string inoa, t_client &clt, std::string msg
 	std::map<std::string,int>::iterator it = this->_nicks.find(inoa);
 	if(it != this->_nicks.end())
 	{
-		std::string prefix = "PRIVMSG FROM - " + clt.nick.string + "($" + clt.user.string + "):";
-		send_msg(it->second, prefix, 1);
-		send_msg(it->second, msg, 2);
+		std::string response = ":" + clt.nick.string + "!" + clt.user.string + "@hostname " + "PRIVMSG " + inoa +  " :" + msg + "\r\n";
+		send(it->second,response.c_str(),response.size(),0);
 		return(true);
 	}
 	return(false);

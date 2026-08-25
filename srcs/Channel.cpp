@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
+/*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/11 15:09:52 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/25 15:38:24 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/25 18:33:17 by finn             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -159,7 +159,8 @@ void Channel::handle_join(std::vector<std::string> split_msg, t_client &clt)
 			chl.clt_fds.insert(clt.fd);
 			clt.channels.insert(channel_nombres[i]);
 			chl.clt_counter += 1;
-			send_msg(clt.fd, " Joined channel",2);
+			send_channel_msg(channel_nombres[i],clt,"","JOIN");
+			// send_msg(clt.fd, response,2);
 		}
 	}
 }
@@ -229,7 +230,6 @@ void Channel::handle_privmsg(std::vector<std::string> split_msg, t_client &clt, 
 		}
 		if(inoa[i].find("#") == std::string::npos && inoa[i].find("&") == std::string::npos)
 		{
-
 			if(this->client_ptr->search_client_list(inoa[i], clt, msg) == false)
 			{
 				send_msg(clt.fd, "Nick ", 0);
@@ -238,33 +238,25 @@ void Channel::handle_privmsg(std::vector<std::string> split_msg, t_client &clt, 
 			}
 			continue;
 		}
-		send_channel_msg(inoa[i], clt, msg);
-		// std::set<int>::iterator fd_it;
-		// std::string chop;
-		// for (fd_it = this->channels[inoa[i]].clt_fds.begin(); fd_it != this->channels[inoa[i]].clt_fds.end(); ++fd_it)
-		// {
-		// 	chop = ": ";
-		// 	if (this->channels[inoa[i]].admins.find(clt.fd) != this->channels[inoa[i]].admins.end())
-		// 		chop += "@";
-		// 	std::string prefix = inoa[i] + chop + clt.nick.string + "($" + clt.user.string + "):";
-		// 	send_msg(*fd_it, prefix, 1);
-		// 	send_msg(*fd_it, msg, 2);
-		// }
+		send_channel_msg(inoa[i], clt, msg,"PRIVMSG");
 	}
 }
 
-void	Channel::send_channel_msg(std::string channel_name, t_client &clt, std::string msg)
+void	Channel::send_channel_msg(std::string channel_name, t_client &clt, std::string msg,std::string command)
 {
 	std::set<int>::iterator fd_it;
 	std::string chop;
 	for (fd_it = this->channels[channel_name].clt_fds.begin(); fd_it != this->channels[channel_name].clt_fds.end(); ++fd_it)
 	{
-		chop = ": ";
-		if (this->check_admin(this->channels[channel_name], clt.fd) == true)
+		chop = ":";
+		if (this->check_admin(this->channels[channel_name], clt.fd) == true) 
 			chop += "@";
-		std::string prefix = channel_name + chop + clt.nick.string + "($" + clt.user.string + "):";
-		send_msg(*fd_it, prefix, 1);
-		send_msg(*fd_it, msg, 2);
+		std::string response = chop + clt.nick.string + "!" + clt.user.string + "@hostname " + command + " " + channel_name;
+		if(msg.empty() == false)
+			response += " " + msg;
+		response += "\r\n";
+		if(*fd_it != clt.fd || command == "JOIN")
+			send(*fd_it,response.c_str(),response.size(),0);
 	}
 }
 
@@ -314,7 +306,7 @@ void	Channel::handle_kick(std::vector<std::string> split_msg, t_client &clt, std
 				msg = "Successfully kicked " +  nicknames[j] + " out of " + channel_names[i];
 			else
 				msg = "Successfully kicked " +  nicknames[j] + " out of " + channel_names[i] + " reason:" + reason;
-			send_channel_msg(channel_names[i], clt, msg);
+			send_channel_msg(channel_names[i], clt, msg,"KICK");
 			cur_nick->channels.erase(channel_names[i]);
 			this->channels[channel_names[i]].clt_counter--;
 			this->channels[channel_names[i]].clt_fds.erase(cur_nick->fd);
@@ -357,7 +349,7 @@ void	Channel::handle_topic(std::vector<std::string> split_msg, t_client &clt, st
 	}
 	chl.topic = topic;
 	std::string msg = " changed the channel " + split_msg[1] + " topic to:" + topic;
-	send_channel_msg(split_msg[1], clt, msg);
+	send_channel_msg(split_msg[1], clt, msg,"TOPIC");
 }
 
 void	Channel::handle_mode(std::vector<std::string> split_msg,t_client &clt)
@@ -368,18 +360,31 @@ void	Channel::handle_mode(std::vector<std::string> split_msg,t_client &clt)
 		send_server_msg(clt.fd, "Missing channel name");
 		return ;
 	}
+	t_channel &chl = this->channels[split_msg[1]];
 	if (split_msg.size() < 3)
 	{
-		send_server_msg(clt.fd, "Missing channel mode options to add or remove (+/-itkol)");
+		std::string response = ":IRC 324 " + clt.nick.string + " " + split_msg[1] + " +";
+		if(chl.invite_only == true)
+			response += "i";
+		if(chl.topic_change == true)
+			response += "t";
+		if(chl.password.exists == true)
+			response += "k";
+		if(chl.user_limit_bool == true)
+			response += "l";
+		if(chl.password.exists == true)
+			response += " " + chl.password.string;
+		if(chl.password.exists == true)
+			response += " " + chl.user_limit;
+		response += "\r\n";
+		send(clt.fd,response.c_str(),response.size(),0);
 		return ;
 	}
-	// mode #42 +tlo-o 20
 	if(split_msg[2][0] != '+' && split_msg[2][0] != '-')
 	{
 		send_server_msg(clt.fd, "Channel options must start with + (enable) or - (disable)");
 		return;
 	}
-	t_channel &chl = this->channels[split_msg[1]];
 	if (chl.name.empty())
 	{
 		send_server_msg(clt.fd, "Channel doesn't exist");
@@ -403,17 +408,17 @@ void	Channel::handle_mode(std::vector<std::string> split_msg,t_client &clt)
 			{
 				chl.invite_only = mode;
 				if(mode == true)
-					send_channel_msg(chl.name,clt,"Channel is now invite only");
+					send_channel_msg(chl.name,clt,"Channel is now invite only","TOPIC");
 				else
-					send_channel_msg(chl.name,clt,"Channel is now open");
+					send_channel_msg(chl.name,clt,"Channel is now open","TOPIC");
 			}
 			else if(split_msg[2][i] == 't')
 			{
 				chl.topic_change = mode;
 				if (mode == true)
-					send_channel_msg(chl.name, clt, "Topic is configurable by admins");
+					send_channel_msg(chl.name, clt, "Topic is configurable by admins","TOPIC");
 				else
-					send_channel_msg(chl.name, clt, "Topic is configurable by everyone");
+					send_channel_msg(chl.name, clt, "Topic is configurable by everyone","TOPIC");
 			}
 			else if (split_msg[2][i] == 'k')
 			{
