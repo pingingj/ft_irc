@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_irc.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:47 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/24 19:05:25 by finn             ###   ########.fr       */
+/*   Updated: 2026/08/25 15:04:53 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,6 +67,7 @@ typedef struct s_channel
 {
 	std::set<int> clt_fds;
 	std::set<int> admins;
+	std::set<int> whitelist;
 	std::string name;
 	std::string topic;
 	bool invite_only;
@@ -119,6 +120,7 @@ class Channel
 		void		handle_part(std::string split_msg, t_client &clt);
 		void		handle_privmsg(std::vector<std::string> split_msg, t_client &clt, std::string command);
 		void		handle_kick(std::vector<std::string> split_msg, t_client &clt, std::string command);
+		void		handle_invite(std::vector<std::string> split_msg, t_client &clt);
 		void		handle_topic(std::vector<std::string> split_msg, t_client &clt, std::string command);
 		void		handle_mode(std::vector<std::string> split_msg,t_client &clt);
 		void		send_channel_msg(std::string channel_name, t_client &clt, std::string msg);
