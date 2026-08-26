@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/30 16:27:19 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/25 17:11:53 by finn             ###   ########.fr       */
+/*   Updated: 2026/08/26 17:27:04 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,7 +58,7 @@ void	send_msg(int fd, std::string msg, int flag)
 {
 	static std::string res;
 	if(flag == 0)
-		res += "Server: " + msg;
+		res += ":server " + msg;
 	if (flag == 1)
 		res += msg;
 	if (flag == 2)
@@ -67,6 +67,8 @@ void	send_msg(int fd, std::string msg, int flag)
 		send(fd, res.c_str(), res.size(), 0);
 		res.clear();
 	}
+	if (flag == 3)
+		res.clear();
 }
 
 void	send_msg_hex(int fd, std::string response)

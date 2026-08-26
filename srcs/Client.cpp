@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/25 18:10:36 by finn             ###   ########.fr       */
+/*   Updated: 2026/08/26 17:00:03 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -276,9 +276,9 @@ void Server::read_buffer(char *buffer, int fd, int bytes)
 	std::vector<std::string> commands;
 	t_client *clt = this->_client.get_client(fd);
 	clt->buffer.append(buffer, bytes);
-	std::cout << "REAL BUFFER LOL " << clt->buffer << std::endl;
 	if (clt->buffer.find("\r\n") == std::string::npos)
 		return ;
+	std::cout << "REAL BUFFER LOL " << clt->buffer << std::endl;
 	commands = split_string(clt->buffer, "\r\n");
 	if (commands[0].empty())
 	{

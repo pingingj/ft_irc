@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_irc.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:47 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/25 17:29:38 by finn             ###   ########.fr       */
+/*   Updated: 2026/08/26 17:51:56 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -125,6 +125,7 @@ class Channel
 		void		handle_mode(std::vector<std::string> split_msg,t_client &clt);
 		void		send_channel_msg(std::string channel_name, t_client &clt, std::string msg,std::string command);
 		bool		check_admin(t_channel &chl,size_t clt_fd);
+		void 		join_detail(t_channel &chl, t_client &clt);
 };
 
 class Server
