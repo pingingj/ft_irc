@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_irc.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:47 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/26 17:51:56 by dpaes-so         ###   ########.fr       */
+/*   Updated: 2026/08/28 13:54:00 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,6 +54,7 @@ typedef struct s_reg
 typedef struct s_client
 {
 	std::string buffer;
+	std::string	real_name;
 	t_reg	user;
 	t_reg	nick;
 	bool 	c_pass;
@@ -123,6 +124,7 @@ class Channel
 		void		handle_invite(std::vector<std::string> split_msg, t_client &clt);
 		void		handle_topic(std::vector<std::string> split_msg, t_client &clt, std::string command);
 		void		handle_mode(std::vector<std::string> split_msg,t_client &clt);
+		void		handle_who(std::vector<std::string> split_msg, t_client &clt);
 		void		send_channel_msg(std::string channel_name, t_client &clt, std::string msg,std::string command);
 		bool		check_admin(t_channel &chl,size_t clt_fd);
 		void 		join_detail(t_channel &chl, t_client &clt);

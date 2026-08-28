@@ -6,7 +6,7 @@
 /*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:43 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/24 15:16:46 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/28 14:56:00 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,12 +117,14 @@ void	Server::server(char *port)
 					send_server_msg(fd,"Message to big");
 				else if (bytes <= 0) 
 				{
+					std::cout << "oi";
 					t_client *clt = this->_client.get_client(fd);
 					clt->disconnected = true;
 					this->_channel.disconnect_channels(*clt);
 					std::cout << "USER DISCONNECTED" << std::endl;
 					epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL);
 					this->_client.remove_client(fd);
+					std::cout << " boi";
 				}
 				else 
 				{
@@ -134,6 +136,7 @@ void	Server::server(char *port)
 			}
 		}
 	}
+	std::cout << "???" << std::endl;
 	close(ServerSocket);
 }
 

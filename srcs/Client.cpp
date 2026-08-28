@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/26 17:00:03 by dpaes-so         ###   ########.fr       */
+/*   Updated: 2026/08/28 14:39:26 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -132,6 +132,7 @@ void Client::handle_user(std::vector<std::string> split_msg, t_client &clt)
 	send_server_msg(clt.fd, "User set");
 	clt.user.string = split_msg[1];
 	clt.user.exists = true;
+	clt.real_name = split_msg[4].substr(1);
 }
 
 void Client::handle_nick(std::vector<std::string> split_msg, t_client &clt)
@@ -193,6 +194,7 @@ void Client::handle_fast(t_client &clt)
 	clt.user.exists = true;
 	clt.nick.string = "nick1";
 	clt.user.string = "user1";
+	clt.real_name = "realname1";
 	this->_nicks.insert(std::make_pair(clt.nick.string,clt.fd));
 	clt.registered = true;
 }
@@ -204,6 +206,7 @@ void Client::handle_fast2(t_client &clt)
 	clt.user.exists = true;
 	clt.nick.string = "nick2";
 	clt.user.string = "user2";
+	clt.real_name = "realname2";
 	this->_nicks.insert(std::make_pair(clt.nick.string,clt.fd));
 	clt.registered = true;
 }
