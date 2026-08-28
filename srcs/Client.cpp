@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
+/*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/28 14:39:26 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/08/28 16:37:43 by finn             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,7 +63,15 @@ void Client::sendHelp(t_client clt)
 {
 	if (clt.registered == true)
 	{
-		(void)clt;
+		send_server_msg(clt.fd,"JOIN -> /JOIN <channel_name>,(<channel_name>) :to join a channel");
+		send_server_msg(clt.fd,"PART -> /PART <channel_name>,(<channel_name>) :to leave a channel");
+		send_server_msg(clt.fd,"PRIVMSG -> /PRIVMSG <nick_name/channel_name>,(<nickname/channel_name>) :to send a privmsg to a channel/user");
+		send_server_msg(clt.fd,"WHO -> /WHO <channel_name> :to check users in the channel");
+		send_server_msg(clt.fd,"\nOPERATOR COMMANDS:");
+		send_server_msg(clt.fd,"KICK -> /KICK <channel_name> <nickname> (reason) :to kick a user from a channel");
+		send_server_msg(clt.fd,"INVITE -> /INVITE <nickname> <channel_name> :to invite user to a channel");
+		send_server_msg(clt.fd,"TOPIC -> /TOPIC <channel_name> (<new_topic>) :to see/(change) the channel topic");
+		send_server_msg(clt.fd,"MODE -> /MODE <channel_name> <[+|-]i|k|t|o|l> (<parameters>) :to join a channel");
 	}
 	else
 	{
