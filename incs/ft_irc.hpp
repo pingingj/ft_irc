@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_irc.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
+/*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:47 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/28 13:54:00 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/09/07 16:54:23 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,7 +95,7 @@ class Client
 		void		remove_client(int fd);
 		void		sendHelp(t_client clt);
 		void		handle_pass(std::vector<std::string> split_msg, t_client &clt, std::string s_pass);
-		void		handle_user(std::vector<std::string> split_msg,t_client &clt);
+		void		handle_user(std::vector<std::string> split_msg, t_client &clt, std::string cmd);
 		void		handle_nick(std::vector<std::string> split_msg, t_client &clt);
 		void		handle_fast(t_client &clt);
 		void		handle_fast2(t_client &clt);

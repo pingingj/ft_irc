@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/30 16:27:19 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/26 17:27:04 by dpaes-so         ###   ########.fr       */
+/*   Updated: 2026/09/07 14:26:30 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,7 +62,7 @@ void	send_msg(int fd, std::string msg, int flag)
 	if (flag == 1)
 		res += msg;
 	if (flag == 2)
-	{
+	{	
 		res += msg + "\r\n";
 		send(fd, res.c_str(), res.size(), 0);
 		res.clear();

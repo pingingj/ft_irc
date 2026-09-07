@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/28 16:37:43 by finn             ###   ########.fr       */
+/*   Updated: 2026/09/07 16:54:53 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,6 +46,7 @@ void Client::add_client(int fd)
 	client.registered = false;
 	client.c_pass = false;
 	client.nick.exists = false;
+	client.nick.string = "*";
 	client.user.exists = false;
 	client.disconnected = false;
 	this->_clients.insert(std::make_pair(fd, client));
@@ -102,23 +103,20 @@ void Client::handle_pass(std::vector<std::string> split_msg, t_client &clt, std:
 	}
 	if (split_msg[1] != s_pass)
 	{
-		send_server_msg(clt.fd, "Invalid password");
+		send_msg(clt.fd, ":server 464 " + clt.nick.string + " :Password incorrect",2);
 		return ;
 	}
 	send_server_msg(clt.fd, "Successfully logged in");
 	clt.c_pass = true;
 }
 
-void Client::handle_user(std::vector<std::string> split_msg, t_client &clt)
+void Client::handle_user(std::vector<std::string> split_msg, t_client &clt, std::string cmd)
 {
-	if (clt.c_pass == false)
+	std::string msg;
+	if (split_msg.size() < 5)
 	{
-		send_server_msg(clt.fd, "You must join the server (password)");
-		return ;
-	}
-	if (split_msg.size() < 5 || split_msg[4][0] != ':')
-	{
-		send_server_msg(clt.fd, "Wrong format e.g: USER <username> <hostname> <servername> : <real name>");
+		msg = ":server 461 " + clt.nick.string + " USER :Not enough parameters";
+		send_msg(clt.fd,msg,2);
 		return ;
 	}
 	if (str_isalnum(split_msg[1]) == false)
@@ -126,56 +124,36 @@ void Client::handle_user(std::vector<std::string> split_msg, t_client &clt)
 		send_server_msg(clt.fd, "Username must be alpha numeric");
 		return ;
 	}
-	if (split_msg[1] == "CHECK")
-	{
-		send_server_msg(clt.fd, "Your current USERNAME is ");
-		send_server_msg(clt.fd, clt.user.string);
-		return ;
-	}
 	if (clt.user.exists == true)
 	{
-		send_server_msg(clt.fd, "Can't change user");
+		msg = ":server 462 * " + split_msg[1] +  " :You may not reregister";
+		send_msg(clt.fd,msg,2);
 		return ;
 	}
-	send_server_msg(clt.fd, "User set");
+	if (split_msg[4][0] == ':')
+		clt.real_name = cmd.substr(cmd.find(" :") + 2);
+	else
+		clt.real_name = split_msg[4];
+	std::string feeback = split_msg[1] + " :User set";
+	send_msg(clt.fd, feeback,2);
 	clt.user.string = split_msg[1];
 	clt.user.exists = true;
-	clt.real_name = split_msg[4].substr(1);
 }
 
 void Client::handle_nick(std::vector<std::string> split_msg, t_client &clt)
 {
-	if (clt.c_pass == false)
-	{
-		send_server_msg(clt.fd, "You must join the server (password)");
-		return ;
-	}
+	std::string msg;
 	if (split_msg.size() < 2)
 	{
-		send_server_msg(clt.fd, "Missing nickname");
-		return ;
-	}
-	if (split_msg.size() != 2)
-	{
-		send_server_msg(clt.fd, "Wrong format e.g: NICK (nickname)");
+		msg = ":server 461 " + clt.nick.string + " NICK :Not enough parameters";
+		send_msg(clt.fd, msg, 2);
 		return ;
 	}
 	if (str_isalnum(split_msg[1]) == false)
 	{
-		send_server_msg(clt.fd, "Nickname must be alpha numeric");
+		std::string msg = ":server 432 * " + split_msg[1] +  " " + ":Erroneous nickname";
+		send_msg(clt.fd,msg,2);
 		return ;
-	}
-	if (split_msg[1] == "CHECK")
-	{
-		send_server_msg(clt.fd, "Your current NICKNAME is ");
-		send_server_msg(clt.fd, clt.nick.string);
-		return ;
-	}
-	if (clt.nick.exists == true)
-	{
-		send_server_msg(clt.fd, "NICKNAME successfully changed");
-		clt.nick.string = split_msg[1];
-		return;
 	}
 	if (split_msg[1].size() > 9)
 	{
@@ -185,14 +163,28 @@ void Client::handle_nick(std::vector<std::string> split_msg, t_client &clt)
 	}
 	if (this->_nicks.find(split_msg[1]) != this->_nicks.end())
 	{
-		send_server_msg(clt.fd, "Nick already in use");
+		std::string msg = ":server 433 * " + split_msg[1] +  " " + ":Nick already in use";
+		send_msg(clt.fd,msg,2);
 		return ;
 	}
-	send_server_msg(clt.fd, "Nick set");
-	clt.nick.string = split_msg[1];
-	clt.nick.exists = true;
-	this->_nicks.insert(std::make_pair(split_msg[1],clt.fd));
-	clt.registered = true;
+	if (clt.nick.exists == true)
+	{
+		std::string response = ":" + clt.nick.string + "!" + clt.user.string + "@hostname " + "NICK " +  ":" + split_msg[1] + "\r\n";
+		send(clt.fd,response.c_str(),response.size(),0);
+		this->_nicks.erase(clt.nick.string);
+		this->_nicks.insert(std::make_pair(split_msg[1],clt.fd));
+		clt.nick.string = split_msg[1];
+		return;
+	}
+	else
+	{
+		clt.nick.exists = true;
+		clt.nick.string = split_msg[1];
+		this->_nicks.insert(std::make_pair(split_msg[1],clt.fd));
+		std::string feeback = split_msg[1] + " :Nickname set";
+		send_msg(clt.fd, feeback,2);
+		return;
+	}
 }
 
 void Client::handle_fast(t_client &clt)
@@ -242,7 +234,7 @@ bool Server::handle_command(std::string command, t_client &clt)
 	else if (split_msg[0] == "PASS")
 		this->_client.handle_pass(split_msg, clt, _pass);
 	else if (split_msg[0] == "USER")
-		this->_client.handle_user(split_msg, clt);
+		this->_client.handle_user(split_msg, clt, command);
 	else if (split_msg[0] == "NICK")
 		this->_client.handle_nick(split_msg, clt);
 	else if (split_msg[0] == "JOIN")
@@ -252,6 +244,12 @@ bool Server::handle_command(std::string command, t_client &clt)
 	else
 		send_server_msg(clt.fd, "Unknown command");
 	std::cout << "splitmsg !!" << split_msg[0] << "!!" << std::endl;
+	if(clt.registered == false && clt.nick.exists && clt.user.exists && clt.c_pass)
+	{
+		clt.registered = true;
+		std::string feeback = ":server 001 " + clt.nick.string + " :Welcome to IRC! :D";
+		send_msg(clt.fd, feeback,2);
+	}
 	return (true);
 }
 
