@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
+/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/11 15:09:52 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/07 18:25:49 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/09/08 15:14:01 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -198,19 +198,22 @@ void Channel::handle_join(std::vector<std::string> split_msg, t_client &clt)
 	}
 }
 
-void	Channel::handle_part(std::string split_msg, t_client &clt)
+void	Channel::handle_part(std::vector<std::string> split_msg, t_client &clt)
 {
-	if (split_msg.empty())
+	std::string error;
+	if (split_msg.size() < 2)
 	{
-		send_server_msg(clt.fd, "Missing channel name to exit");
+		error = ":server 461 " + clt.nick.string + " PART :Not enough parameters";
+		send_msg(clt.fd, error, 2);
 		return ;
 	}
-	std::vector<std::string> chl_names = split_char(split_msg, ',');
+	std::vector<std::string> chl_names = split_char(split_msg[1], ',');
 	for(size_t i = 0; i < chl_names.size(); i++)
 	{
 		if (clt.channels.find(chl_names[i]) == clt.channels.end())
 		{
-			send_server_msg(clt.fd, "Not in this channel or doesn't exist");
+			error = ":server 442 " + clt.nick.string + " " + chl_names[i] + " :You're not on that channel";
+			send_msg(clt.fd, error, 2);
 			return ;
 		}
 		send_channel_msg(chl_names[i], clt, "", "PART");
@@ -236,14 +239,17 @@ void	Channel::handle_part(std::string split_msg, t_client &clt)
 
 void Channel::handle_privmsg(std::vector<std::string> split_msg, t_client &clt, std::string msg)
 {
+	std::string error;
 	if (split_msg.size() < 2)
 	{
-		send_server_msg(clt.fd, "Missing channel name");
+		error = ":server 411 " + clt.nick.string + " :No recipient given";
+		send_msg(clt.fd, error, 2);
 		return ;
 	}
 	if (split_msg.size() < 3)
 	{
-		send_server_msg(clt.fd, "Missing message");
+		error = ":server 412 " + clt.nick.string + " :No text to send";
+		send_msg(clt.fd, error, 2);
 		return ;
 	}
 	if (split_msg[2][0] == ':')
@@ -255,18 +261,16 @@ void Channel::handle_privmsg(std::vector<std::string> split_msg, t_client &clt, 
 	{
 		if ((inoa[i].find("#") != std::string::npos|| inoa[i].find("&") != std::string::npos) && clt.channels.find(inoa[i]) == clt.channels.end())
 		{
-			send_msg(clt.fd, "Not in channel ", 0);
-			send_msg(clt.fd, inoa[i], 1);
-			send_msg(clt.fd, " or doesn't exist", 2);
+			error = ":server 401 " + clt.nick.string + " " + inoa[i] + " :No such channel";
+			send_msg(clt.fd, error, 2);
 			continue;
 		}
 		if(inoa[i].find("#") == std::string::npos && inoa[i].find("&") == std::string::npos)
 		{
 			if(this->client_ptr->search_client_list(inoa[i], clt, msg) == false)
 			{
-				send_msg(clt.fd, "Nick ", 0);
-				send_msg(clt.fd, inoa[i], 1);
-				send_msg(clt.fd, " or doesn't exist", 2);
+				error = ":server 401 " + clt.nick.string + " " + inoa[i] + " :No such channel";
+				send_msg(clt.fd, error, 2);
 			}
 			continue;
 		}
@@ -291,21 +295,18 @@ void	Channel::send_channel_msg(std::string channel_name, t_client &clt, std::str
 		if(msg.empty() == false && command != "INVITE")
 			response += " " + msg;
 		response += "\r\n";
-		if(*fd_it != clt.fd || command == "JOIN" || command == "PART" || command == "TOPIC" || command == "MODE")
+		if(*fd_it != clt.fd || command == "JOIN" || command == "PART" || command == "TOPIC" || command == "MODE" || command == "KICK")
 			send(*fd_it,response.c_str(),response.size(),0);
 	}
 }
 
 void	Channel::handle_kick(std::vector<std::string> split_msg, t_client &clt, std::string cmd)
 {
+	std::string error;
 	if (split_msg.size() < 3)
 	{
-		if (split_msg.size() < 2 || (split_msg[1][0] != '#' && split_msg[1][0] != '&'))
-		{
-			send_server_msg(clt.fd, "Missing channel name");
-			return ;
-		}
-		send_server_msg(clt.fd, "Missing nick to kick");
+		error = ":server 461 " + clt.nick.string + " KICK :Not enough parameters";
+		send_msg(clt.fd, error, 2);
 		return ;
 	}
 	std::string reason = "";
@@ -318,13 +319,16 @@ void	Channel::handle_kick(std::vector<std::string> split_msg, t_client &clt, std
 	for(size_t i = 0;i < channel_names.size();i++)
 	{
 		t_channel &chl = this->channels[channel_names[i]];
+		if (chl.name.empty())
+		{
+			error = ":server 403 " + clt.nick.string + " " + channel_names[i] + ":No such channel";
+			send_msg(clt.fd, error, 2);
+			continue;
+		}
 		if (this->check_admin(chl, clt.fd) == false)
 		{
-			send_msg(clt.fd, "482 ", 0);
-			send_msg(clt.fd, clt.nick.string, 1);
-			send_msg(clt.fd, " ", 1);
-			send_msg(clt.fd, chl.name, 1);
-			send_msg(clt.fd, " :You're not channel operator", 2);
+			error = ":server 482 " + clt.nick.string + " " + chl.name + " :You're not channel operator";
+			send_msg(clt.fd, error, 2);
 			continue ;
 		}
 		for (size_t j = 0; j < nicknames.size(); j++)
@@ -333,10 +337,8 @@ void	Channel::handle_kick(std::vector<std::string> split_msg, t_client &clt, std
 			t_client *cur_nick = this->client_ptr->get_client(clt_fd);
 			if (clt_fd == -1 || cur_nick->channels.find(channel_names[i]) == cur_nick->channels.end())
 			{
-				send_msg(clt.fd, "Nick ", 0);
-				send_msg(clt.fd, nicknames[j], 1);
-				send_msg(clt.fd, " not in channel ", 1);
-				send_msg(clt.fd, channel_names[i], 2);
+				error = ":server 442 " + clt.nick.string + " " + channel_names[i] + ":You're not on that channel";
+				send_msg(clt.fd, error, 2);
 				continue;
 			}
 			std::string msg;
@@ -359,9 +361,11 @@ void	Channel::handle_kick(std::vector<std::string> split_msg, t_client &clt, std
 
 void	Channel::handle_topic(std::vector<std::string> split_msg, t_client &clt, std::string cmd)
 {
+	std::string error;
 	if (split_msg.size() < 2)
 	{
-		send_server_msg(clt.fd, "Missing channel name");
+		error = ":server 461 " + clt.nick.string + " TOPIC :Not enough parameters";
+		send_msg(clt.fd, error, 2);
 		return ;
 	}
 	std::string topic;
@@ -377,12 +381,13 @@ void	Channel::handle_topic(std::vector<std::string> split_msg, t_client &clt, st
 	t_channel &chl = this->channels[split_msg[1]];
 	if(chl.name.empty() || chl.clt_fds.find(clt.fd) == chl.clt_fds.end())
 	{
-		send_server_msg(clt.fd, "Not in the channel");
+		error = ":server 442 " + clt.nick.string + " " + chl.name + " :You're not on that channel";
+		send_msg(clt.fd, error, 2);
 		return ;
 	}
 	if (chl.topic_change == true && this->check_admin(chl, clt.fd) == false)
 	{
-		std::string error = ":server 482 " + clt.nick.string  + " " + chl.name + " :You're not channel operator";
+		error = ":server 482 " + clt.nick.string  + " " + chl.name + " :You're not channel operator";
 		send_msg(clt.fd, error, 2);
 		return ;
 	}
@@ -633,7 +638,7 @@ void Channel::handle_who(std::vector<std::string> split_msg, t_client &clt)
 void Channel::channel_commands(std::vector<std::string> split_msg, t_client &clt, std::string command)
 {
 	if (split_msg[0] == "PART")
-		this->handle_part(split_msg[1], clt);
+		this->handle_part(split_msg, clt);
 	else if(split_msg[0] == "PRIVMSG")
 		this->handle_privmsg(split_msg, clt, command);
 	else if (split_msg[0] == "KICK")
@@ -655,12 +660,18 @@ void Channel::channel_commands(std::vector<std::string> split_msg, t_client &clt
 void	Channel::disconnect_channels(t_client &clt)
 {
 	std::set<std::string>::iterator c_it;
+	std::vector <std::string> vec;
+	std::string	channel;
+	vec.push_back("PART");
 	for (c_it = clt.channels.begin(); c_it != clt.channels.end();)
 	{
-		std::string channel = *c_it;
+		channel += *c_it + ",";
+		std::cout << "channel " << channel << std::endl;
 		++c_it;
-		this->handle_part(channel, clt);
 	}
+	std::cout << "vec size " << vec.size() << std::endl;
+	vec.push_back(channel);
+	this->handle_part(vec, clt);
 }
 
 bool	Channel::check_admin(t_channel &chl,size_t clt_fd)
