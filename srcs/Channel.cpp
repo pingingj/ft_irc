@@ -6,7 +6,7 @@
 /*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/11 15:09:52 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/08 15:14:01 by dpaes-so         ###   ########.fr       */
+/*   Updated: 2026/09/08 18:12:03 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -198,8 +198,9 @@ void Channel::handle_join(std::vector<std::string> split_msg, t_client &clt)
 	}
 }
 
-void	Channel::handle_part(std::vector<std::string> split_msg, t_client &clt)
+void	Channel::handle_part(std::vector<std::string> split_msg, t_client &clt,bool disconnect)
 {
+	(void)disconnect;
 	std::string error;
 	if (split_msg.size() < 2)
 	{
@@ -208,6 +209,7 @@ void	Channel::handle_part(std::vector<std::string> split_msg, t_client &clt)
 		return ;
 	}
 	std::vector<std::string> chl_names = split_char(split_msg[1], ',');
+	print_container(chl_names);
 	for(size_t i = 0; i < chl_names.size(); i++)
 	{
 		if (clt.channels.find(chl_names[i]) == clt.channels.end())
@@ -216,7 +218,7 @@ void	Channel::handle_part(std::vector<std::string> split_msg, t_client &clt)
 			send_msg(clt.fd, error, 2);
 			return ;
 		}
-		send_channel_msg(chl_names[i], clt, "", "PART");
+		send_channel_msg(chl_names[i], clt, "", split_msg[0]);
 		clt.channels.erase(chl_names[i]);
 		this->channels[chl_names[i]].clt_counter--;
 		this->channels[chl_names[i]].clt_fds.erase(clt.fd);
@@ -282,6 +284,12 @@ void	Channel::send_channel_msg(std::string channel_name, t_client &clt, std::str
 {
 	std::set<int>::iterator fd_it;
 	std::string chop;
+	bool disconnect = false;
+	if(command == "DISCONNECT")
+	{
+		disconnect = true;
+		command = "PART";
+	}
 	for (fd_it = this->channels[channel_name].clt_fds.begin(); fd_it != this->channels[channel_name].clt_fds.end(); ++fd_it)
 	{
 		chop = ":";
@@ -295,7 +303,7 @@ void	Channel::send_channel_msg(std::string channel_name, t_client &clt, std::str
 		if(msg.empty() == false && command != "INVITE")
 			response += " " + msg;
 		response += "\r\n";
-		if(*fd_it != clt.fd || command == "JOIN" || command == "PART" || command == "TOPIC" || command == "MODE" || command == "KICK")
+		if(*fd_it != clt.fd || command == "JOIN" || (command == "PART" && disconnect == false) || command == "TOPIC" || command == "MODE" || command == "KICK"  || command == "INVITE")
 			send(*fd_it,response.c_str(),response.size(),0);
 	}
 }
@@ -314,46 +322,42 @@ void	Channel::handle_kick(std::vector<std::string> split_msg, t_client &clt, std
 		reason = cmd.substr(cmd.find(" :") + 2);
 	else if (split_msg.size() > 3)
 		reason = split_msg[3];
-	std::vector<std::string> channel_names = split_char(split_msg[1], ',');
 	std::vector<std::string> nicknames = split_char(split_msg[2], ',');
-	for(size_t i = 0;i < channel_names.size();i++)
+	t_channel &chl = this->channels[split_msg[1]];
+	if (chl.name.empty())
 	{
-		t_channel &chl = this->channels[channel_names[i]];
-		if (chl.name.empty())
+		error = ":server 403 " + clt.nick.string + " " + split_msg[1] + ":No such channel";
+		send_msg(clt.fd, error, 2);
+		return;
+	}
+	if (this->check_admin(chl, clt.fd) == false)
+	{
+		error = ":server 482 " + clt.nick.string + " " + chl.name + " :You're not channel operator";
+		send_msg(clt.fd, error, 2);
+		return ;
+	}
+	for (size_t j = 0; j < nicknames.size(); j++)
+	{
+		int clt_fd = this->client_ptr->get_client_fd(nicknames[j]);
+		t_client *cur_nick = this->client_ptr->get_client(clt_fd);
+		if (clt_fd == -1 || cur_nick->channels.find(split_msg[1]) == cur_nick->channels.end())
 		{
-			error = ":server 403 " + clt.nick.string + " " + channel_names[i] + ":No such channel";
+			error = ":server 442 " + clt.nick.string + " " + split_msg[1] + ":You're not on that channel";
 			send_msg(clt.fd, error, 2);
 			continue;
 		}
-		if (this->check_admin(chl, clt.fd) == false)
-		{
-			error = ":server 482 " + clt.nick.string + " " + chl.name + " :You're not channel operator";
-			send_msg(clt.fd, error, 2);
-			continue ;
-		}
-		for (size_t j = 0; j < nicknames.size(); j++)
-		{
-			int clt_fd = this->client_ptr->get_client_fd(nicknames[j]);
-			t_client *cur_nick = this->client_ptr->get_client(clt_fd);
-			if (clt_fd == -1 || cur_nick->channels.find(channel_names[i]) == cur_nick->channels.end())
-			{
-				error = ":server 442 " + clt.nick.string + " " + channel_names[i] + ":You're not on that channel";
-				send_msg(clt.fd, error, 2);
-				continue;
-			}
-			std::string msg;
-			if (reason.empty() == true)
-				msg = cur_nick->nick.string;
-			else
-				msg = cur_nick->nick.string + " " + reason;
-			send_channel_msg(channel_names[i], clt, msg,"KICK");
-			cur_nick->channels.erase(channel_names[i]);
-			this->channels[channel_names[i]].clt_counter--;
-			this->channels[channel_names[i]].clt_fds.erase(cur_nick->fd);
-			this->channels[channel_names[i]].whitelist.erase(cur_nick->fd);
-			if (this->check_admin(this->channels[channel_names[i]], cur_nick->fd) == true)
-				this->channels[channel_names[i]].admins.erase(cur_nick->fd);
-		}
+		std::string msg;
+		if (reason.empty() == true)
+			msg = cur_nick->nick.string;
+		else
+			msg = cur_nick->nick.string + " " + reason;
+		send_channel_msg(split_msg[1], clt, msg,"KICK");
+		cur_nick->channels.erase(split_msg[1]);
+		this->channels[split_msg[1]].clt_counter--;
+		this->channels[split_msg[1]].clt_fds.erase(cur_nick->fd);
+		this->channels[split_msg[1]].whitelist.erase(cur_nick->fd);
+		if (this->check_admin(this->channels[split_msg[1]], cur_nick->fd) == true)
+			this->channels[split_msg[1]].admins.erase(cur_nick->fd);
 	}
 }
 
@@ -577,33 +581,44 @@ void	Channel::handle_mode(std::vector<std::string> split_msg,t_client &clt)
 
 void	Channel::handle_invite(std::vector<std::string> split_msg, t_client &clt)
 {
-	if (split_msg.size() < 2)
-	{
-		send_server_msg(clt.fd, "Missing nickname");
-		return ;
-	}
+	std::string error;
 	if (split_msg.size() < 3)
 	{
-		send_server_msg(clt.fd, "Missing channel name");
+		error = ":server 461 " + clt.nick.string + " INVITIE :Not enough parameters";
+		send_msg(clt.fd, error, 2);
 		return ;
 	}
 	t_channel &chl = this->channels[split_msg[2]];
 	int cur_fd = this->client_ptr->get_client_fd(split_msg[1]);
 	if (cur_fd == -1)
-		send_server_msg(clt.fd, "Nickname not found");
-	if (chl.name.empty() == true)
 	{
-		send_msg(cur_fd, "Invited to a new channel: ", 0);
-		send_msg(cur_fd, split_msg[2], 2);
+		error = ":server 401 " + clt.nick.string + " " + split_msg[1] + " :No such nick";
+		send_msg(clt.fd,error,2);
+		return;
 	}
-	else
+	if(chl.clt_fds.find(cur_fd) != chl.clt_fds.end())
 	{
-		send_msg(cur_fd, "Invited to: ", 0);
-		send_msg(cur_fd, split_msg[2], 2);
-		if(chl.invite_only == true)
-			chl.whitelist.insert(cur_fd);
+		error = ":server 443 " + clt.nick.string + " " + split_msg[1] + " :Is already on channel";
+		send_msg(clt.fd,error,2);
+		return;
 	}
+	if (chl.clt_fds.find(clt.fd) == chl.clt_fds.end())
+	{
+		error = ":server 442 " + clt.nick.string + " " + split_msg[1] + " :You're not on that channel";
+		send_msg(clt.fd,error,2);
+		return;
+	}
+	if (check_admin(chl, clt.fd) == false)
+	{
+		error = ":server 482 " + clt.nick.string + " " + chl.name + " :You're not channel operator";
+		send_msg(clt.fd, error, 2);
+		return;
+	}
+	if(chl.invite_only == true)
+		chl.whitelist.insert(cur_fd);
 	send_channel_msg(chl.name, clt, split_msg[1], "INVITE");
+	std::string msg = "You have been invited to the channel " + chl.name; 
+	send_msg(cur_fd,msg,2);
 }
 
 void Channel::handle_who(std::vector<std::string> split_msg, t_client &clt)
@@ -638,7 +653,7 @@ void Channel::handle_who(std::vector<std::string> split_msg, t_client &clt)
 void Channel::channel_commands(std::vector<std::string> split_msg, t_client &clt, std::string command)
 {
 	if (split_msg[0] == "PART")
-		this->handle_part(split_msg, clt);
+		this->handle_part(split_msg, clt,false);
 	else if(split_msg[0] == "PRIVMSG")
 		this->handle_privmsg(split_msg, clt, command);
 	else if (split_msg[0] == "KICK")
@@ -662,16 +677,16 @@ void	Channel::disconnect_channels(t_client &clt)
 	std::set<std::string>::iterator c_it;
 	std::vector <std::string> vec;
 	std::string	channel;
-	vec.push_back("PART");
-	for (c_it = clt.channels.begin(); c_it != clt.channels.end();)
+	vec.push_back("DISCONNECT");
+	for (c_it = clt.channels.begin(); c_it != clt.channels.end();c_it++)
 	{
 		channel += *c_it + ",";
 		std::cout << "channel " << channel << std::endl;
-		++c_it;
 	}
-	std::cout << "vec size " << vec.size() << std::endl;
 	vec.push_back(channel);
-	this->handle_part(vec, clt);
+	std::cout << "vec FIRST " << vec[1] << std::endl;
+	std::cout << "vec size " << vec.size() << std::endl;
+	this->handle_part(vec, clt,true);
 }
 
 bool	Channel::check_admin(t_channel &chl,size_t clt_fd)

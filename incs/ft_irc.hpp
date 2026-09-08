@@ -6,7 +6,7 @@
 /*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:47 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/08 13:42:26 by dpaes-so         ###   ########.fr       */
+/*   Updated: 2026/09/08 17:58:25 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,7 @@ void print_container(Container &cont)
 
     while (it != cont.end())
     {
-        std::cout << *it << " ";
+        std::cout << *it << " !";
         ++it;
     }
     std::cout << std::endl;
@@ -118,7 +118,7 @@ class Channel
 		void 		channel_commands(std::vector<std::string> split_msg, t_client &clt, std::string command);
 		void		disconnect_channels(t_client &clt);
 		void		handle_join(std::vector<std::string> split_msg, t_client &clt);
-		void		handle_part(std::vector<std::string> split_msg, t_client &clt);
+		void		handle_part(std::vector<std::string> split_msg, t_client &clt,bool disconnect);
 		void		handle_privmsg(std::vector<std::string> split_msg, t_client &clt, std::string command);
 		void		handle_kick(std::vector<std::string> split_msg, t_client &clt, std::string command);
 		void		handle_invite(std::vector<std::string> split_msg, t_client &clt);
