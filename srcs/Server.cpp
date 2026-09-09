@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgarcez- <dgarcez-@student.42lisboa.com    +#+  +:+       +#+        */
+/*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:43 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/08/28 14:56:00 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/09/09 13:51:17 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,6 +72,7 @@ void	Server::server(char *port)
 	epoll_event Server;
 	Server.events = EPOLLIN;//event is recieve data
 	Server.data.fd = ServerSocket;
+	this->epfd = epfd;
 	epoll_ctl(epfd, EPOLL_CTL_ADD,ServerSocket, &Server);
 	while(true)
 	{
@@ -120,7 +121,7 @@ void	Server::server(char *port)
 					std::cout << "oi";
 					t_client *clt = this->_client.get_client(fd);
 					clt->disconnected = true;
-					this->_channel.disconnect_channels(*clt);
+					this->_channel.disconnect_channels(*clt, epfd);
 					std::cout << "USER DISCONNECTED" << std::endl;
 					epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL);
 					this->_client.remove_client(fd);

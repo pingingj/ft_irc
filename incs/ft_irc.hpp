@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_irc.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:47 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/08 17:58:25 by dpaes-so         ###   ########.fr       */
+/*   Updated: 2026/09/09 13:51:26 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -116,7 +116,7 @@ class Channel
 		Channel &operator=(const Channel &obj);
 		~Channel();
 		void 		channel_commands(std::vector<std::string> split_msg, t_client &clt, std::string command);
-		void		disconnect_channels(t_client &clt);
+		void		disconnect_channels(t_client &clt, int epfd);
 		void		handle_join(std::vector<std::string> split_msg, t_client &clt);
 		void		handle_part(std::vector<std::string> split_msg, t_client &clt,bool disconnect);
 		void		handle_privmsg(std::vector<std::string> split_msg, t_client &clt, std::string command);
@@ -133,6 +133,7 @@ class Channel
 class Server
 {
 	private:
+		int epfd;
 		std::string _pass;
 		Client _client;
 		Channel _channel;

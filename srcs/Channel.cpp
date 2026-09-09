@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/11 15:09:52 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/08 18:12:03 by dpaes-so         ###   ########.fr       */
+/*   Updated: 2026/09/09 13:50:10 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,16 +42,6 @@ Channel &Channel::operator=(const Channel &obj)
 	return (*this);
 }
 
-
-// void Channel::channel_options(t_channel &chl)
-// {
-// 	// while(true)
-// 	// {
-// 	// 	char buffer[1024];
-// 	// 	int bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
-// 	// }
-// }
-// :server 331 Alice #test :No topic is set
 void Channel::join_detail(t_channel &chl, t_client &clt)
 {
 	std::string msg;
@@ -666,27 +656,23 @@ void Channel::channel_commands(std::vector<std::string> split_msg, t_client &clt
 		this->handle_mode(split_msg, clt);
 	else if (split_msg[0] == "WHO")
 		this->handle_who(split_msg, clt);
-	else if (split_msg[0] == "QUIT")
-		this->disconnect_channels(clt);
 	else
 		send_server_msg(clt.fd, "Unknown command");
 }
 
-void	Channel::disconnect_channels(t_client &clt)
+void	Channel::disconnect_channels(t_client &clt, int epfd)
 {
 	std::set<std::string>::iterator c_it;
 	std::vector <std::string> vec;
 	std::string	channel;
 	vec.push_back("DISCONNECT");
 	for (c_it = clt.channels.begin(); c_it != clt.channels.end();c_it++)
-	{
 		channel += *c_it + ",";
-		std::cout << "channel " << channel << std::endl;
-	}
 	vec.push_back(channel);
-	std::cout << "vec FIRST " << vec[1] << std::endl;
-	std::cout << "vec size " << vec.size() << std::endl;
 	this->handle_part(vec, clt,true);
+	std::cout << "USER DISCONNECTED" << std::endl;
+	epoll_ctl(epfd, EPOLL_CTL_DEL, clt.fd, NULL);
+	this->client_ptr->remove_client(clt.fd);
 }
 
 bool	Channel::check_admin(t_channel &chl,size_t clt_fd)

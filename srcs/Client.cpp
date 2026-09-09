@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/08 13:03:34 by dpaes-so         ###   ########.fr       */
+/*   Updated: 2026/09/09 13:52:39 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -238,7 +238,12 @@ bool Server::handle_command(std::string command, t_client &clt)
 	else if (split_msg[0] == "NICK")
 		this->_client.handle_nick(split_msg, clt);
 	else if (split_msg[0] == "JOIN")
-		this->_channel.handle_join(split_msg, clt);	
+		this->_channel.handle_join(split_msg, clt);
+	else if (split_msg[0] == "QUIT")
+	{
+		this->_channel.disconnect_channels(clt, this->epfd);
+		return (false);
+	}
 	else if(clt.registered == true)
 		this->_channel.channel_commands(split_msg, clt, command);
 	else
@@ -298,7 +303,8 @@ void Server::read_buffer(char *buffer, int fd, int bytes)
 	for (size_t i = 0; i < commands.size(); i++)
 	{
 		std::cout << "Command: " << commands.at(i) << std::endl;
-		this->handle_command(commands[i], *clt);
+		if (this->handle_command(commands[i], *clt) == false)
+			return ;
 	}
 	clt->buffer.erase(clt->buffer.begin(), clt->buffer.end());
 }
