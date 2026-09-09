@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/30 16:27:19 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/09 15:03:33 by finn             ###   ########.fr       */
+/*   Updated: 2026/09/09 17:53:02 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,8 +24,6 @@ std::vector<std::string> split_string(std::string s, std::string delimiter)
         pos_start = pos_end + delim_len;
         res.push_back (token);
     }
-
-    // res.push_back (s.substr (pos_start));
     return res;
 }
 
@@ -69,12 +67,6 @@ void	send_msg(int fd, std::string msg, int flag)
 	}
 	if (flag == 3)
 		res.clear();
-}
-
-void	send_msg_hex(int fd, std::string response)
-{
-	response += "\r\n";
-	send(fd, response.c_str(), response.size(), 0);
 }
 
 void	send_server_msg(int fd, std::string msg)

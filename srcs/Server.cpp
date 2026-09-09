@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:43 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/09 16:54:40 by finn             ###   ########.fr       */
+/*   Updated: 2026/09/09 17:59:06 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,7 @@ Server &Server::operator=(const Server &obj)
 	return (*this);
 }
 
-void	Server::server(char *port)
+int	Server::serverinit(char *port)
 {
 	int ServerSocket = socket(AF_INET, SOCK_STREAM, 0);
 	if (ServerSocket < 0)
@@ -74,6 +74,11 @@ void	Server::server(char *port)
 	Server.data.fd = ServerSocket;
 	this->epfd = epfd;
 	epoll_ctl(epfd, EPOLL_CTL_ADD,ServerSocket, &Server);
+	return(ServerSocket);
+}
+void	Server::server(char *port)
+{
+	int ServerSocket = serverinit(port);
 	while(true)
 	{
 		if(g_exit_flag == true)
@@ -119,7 +124,6 @@ void	Server::server(char *port)
 					send_server_msg(fd,"Message to big");
 					t_client *clt = this->_client.get_client(fd);
 					clt->buffer.erase(clt->buffer.begin(), clt->buffer.end());
-
 				}
 				else if (bytes <= 0) 
 				{

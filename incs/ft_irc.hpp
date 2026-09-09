@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_irc.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
+/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:47 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/09 13:51:26 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/09/09 18:22:25 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,6 +128,12 @@ class Channel
 		void		send_channel_msg(std::string channel_name, t_client &clt, std::string msg,std::string command);
 		bool		check_admin(t_channel &chl,size_t clt_fd);
 		void 		join_detail(t_channel &chl, t_client &clt);
+		bool		join_channel(t_client &clt,t_channel &chl,std::vector<std::string> channel_passaggio,std::vector<std::string> channel_nombres,int i);
+		void		mode_check(t_client &clt,t_channel &chl,std::string str);
+		bool		mode_operator(bool mode,std::vector<std::string> split_msg,t_client &clt,t_channel &chl,size_t *j);
+		bool		mode_limit(bool mode,std::vector<std::string> split_msg,t_client &clt,t_channel &chl,size_t *j);
+
+
 };
 
 class Server
@@ -146,6 +152,7 @@ class Server
 		void	server(char *port);
 		void	read_buffer(char *buffer,int fd, int bytes);
 		bool	handle_command(std::string command,t_client &clt);
+		int		serverinit(char *port);
 };
 
 std::vector<std::string> split_string(std::string s, std::string delimiter);
@@ -155,8 +162,6 @@ std::vector<std::string> split_char(const std::string &s, char delim);
 bool	str_isalnum(std::string &str);
 
 void	send_server_msg(int fd, std::string msg);
-
-void	send_msg_hex(int fd, std::string response);
 
 void	send_msg(int fd, std::string msg, int flag);
 #endif

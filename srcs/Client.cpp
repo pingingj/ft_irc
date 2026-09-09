@@ -6,7 +6,7 @@
 /*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/09 17:26:34 by dpaes-so         ###   ########.fr       */
+/*   Updated: 2026/09/09 18:02:41 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -146,34 +146,29 @@ void Client::handle_nick(std::vector<std::string> split_msg, t_client &clt)
 	{
 		msg = ":server 461 " + clt.nick.string + " NICK :Not enough parameters";
 		send_msg(clt.fd, msg, 2);
-		return ;
 	}
-	if (str_isalnum(split_msg[1]) == false)
+	else if (str_isalnum(split_msg[1]) == false)
 	{
 		std::string msg = ":server 432 * " + split_msg[1] +  " " + ":Erroneous nickname";
 		send_msg(clt.fd,msg,2);
-		return ;
 	}
-	if (split_msg[1].size() > 9)
+	else if (split_msg[1].size() > 9)
 	{
 		send_server_msg(clt.fd, "NICKNAME too massive");
 		clt.nick.string = split_msg[1];
-		return;
 	}
-	if (this->_nicks.find(split_msg[1]) != this->_nicks.end())
+	else if (this->_nicks.find(split_msg[1]) != this->_nicks.end())
 	{
 		std::string msg = ":server 433 * " + split_msg[1] +  " " + ":Nick already in use";
 		send_msg(clt.fd,msg,2);
-		return ;
 	}
-	if (clt.nick.exists == true)
+	else if (clt.nick.exists == true)
 	{
 		std::string response = ":" + clt.nick.string + "!" + clt.user.string + "@hostname " + "NICK " +  ":" + split_msg[1] + "\r\n";
 		send(clt.fd,response.c_str(),response.size(),0);
 		this->_nicks.erase(clt.nick.string);
 		this->_nicks.insert(std::make_pair(split_msg[1],clt.fd));
 		clt.nick.string = split_msg[1];
-		return;
 	}
 	else
 	{

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
+/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/11 15:09:52 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/09 13:50:10 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/09/09 18:33:43 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,6 @@ void Channel::join_detail(t_channel &chl, t_client &clt)
 		msg = ":server 332 " + clt.nick.string + " " + chl.name + " :" + chl.topic;
 		send_msg(clt.fd, msg, 2);
 	}
-	// :server 353 nick = #channel :names
 	std::string response = ":server 353 " + clt.nick.string + " = " + chl.name + " :";
 	std::set<int>::iterator it = chl.clt_fds.begin();
 	for(; it != chl.clt_fds.end(); it++)
@@ -67,7 +66,65 @@ void Channel::join_detail(t_channel &chl, t_client &clt)
 	}
 	send_msg(clt.fd, response, 2);
 }
-
+bool Channel::join_channel(t_client &clt,t_channel &chl,std::vector<std::string> channel_passaggio,std::vector<std::string> channel_nombres,int i)
+{
+	std::string error;
+	
+	if (clt.channels.find(channel_nombres[i]) != clt.channels.end())
+	{
+		std::string msg = " Already in " + channel_nombres[i];
+		send_msg(clt.fd, msg, 2);
+		if (channel_passaggio.size() > 0)
+			channel_passaggio.erase(channel_passaggio.begin());
+		return(false) ;
+	}
+	if (chl.user_limit_bool == true && chl.clt_counter >= chl.user_limit)
+	{
+		error = ":server 471 " + clt.nick.string + " " + channel_nombres[i] + " :Cannot join channel (+l)";
+			send_msg(clt.fd, error, 2);
+		if (channel_passaggio.size() > 0)
+			channel_passaggio.erase(channel_passaggio.begin());
+		return(false) ;
+	}
+	if(chl.invite_only == true)
+	{
+		if (chl.whitelist.find(clt.fd) == chl.whitelist.end())
+		{
+			error = ":server 473 " + clt.nick.string + " " + channel_nombres[i] + " :Cannot join channel (+i)";
+			send_msg(clt.fd, error, 2);
+			if (channel_passaggio.size() > 0)
+				channel_passaggio.erase(channel_passaggio.begin());
+			return(false) ;
+		}
+	}
+	if(chl.password.exists == true)
+	{
+		if(channel_passaggio.size() > 0)
+		{
+			if(channel_passaggio[0] != chl.password.string)
+			{
+				error = ":server 475 " + clt.nick.string + " " + channel_nombres[i] + " :Cannot join channel (+k)";
+				send_msg(clt.fd, error, 2);
+				channel_passaggio.erase(channel_passaggio.begin());
+				return(false);
+			}
+			channel_passaggio.erase(channel_passaggio.begin());
+		}
+		else
+		{
+			error = ":server 475 " + clt.nick.string + " " + channel_nombres[i] + " :Cannot join channel (+k)";
+			send_msg(clt.fd, error, 2);
+			return(false) ;
+		}
+	}
+	chl.clt_fds.insert(clt.fd);
+	clt.channels.insert(channel_nombres[i]);
+	chl.clt_counter += 1;
+	send_channel_msg(channel_nombres[i], clt, "", "JOIN");
+	send_msg(0,"",3);
+	join_detail(chl, clt);
+	return(true);
+}
 void Channel::handle_join(std::vector<std::string> split_msg, t_client &clt)
 {
 	std::string error;
@@ -131,59 +188,8 @@ void Channel::handle_join(std::vector<std::string> split_msg, t_client &clt)
 		}
 		else
 		{
-			if (clt.channels.find(channel_nombres[i]) != clt.channels.end())
-			{
-				std::string msg = " Already in " + channel_nombres[i];
-				send_msg(clt.fd, msg, 2);
-				if (channel_passaggio.size() > 0)
-					channel_passaggio.erase(channel_passaggio.begin());
-				continue ;
-			}
-			if (chl.user_limit_bool == true && chl.clt_counter >= chl.user_limit)
-			{
-				error = ":server 471" + clt.nick.string + " " + channel_nombres[i] + " :Cannot join channel (+l)";
-					send_msg(clt.fd, error, 2);
-				if (channel_passaggio.size() > 0)
-					channel_passaggio.erase(channel_passaggio.begin());
-				continue ;
-			}
-			if(chl.invite_only == true)
-			{
-				if (chl.whitelist.find(clt.fd) == chl.whitelist.end())
-				{
-					error = ":server 473 " + clt.nick.string + " " + channel_nombres[i] + " :Cannot join channel (+i)";
-					send_msg(clt.fd, error, 2);
-					if (channel_passaggio.size() > 0)
-						channel_passaggio.erase(channel_passaggio.begin());
-					continue ;
-				}
-			}
-			if(chl.password.exists == true)
-			{
-				if(channel_passaggio.size() > 0)
-				{
-					if(channel_passaggio[0] != chl.password.string)
-					{
-						error = ":server 475 " + clt.nick.string + " " + channel_nombres[i] + " :Cannot join channel (+k)";
-						send_msg(clt.fd, error, 2);
-						channel_passaggio.erase(channel_passaggio.begin());
-						continue;
-					}
-					channel_passaggio.erase(channel_passaggio.begin());
-				}
-				else
-				{
-					error = ":server 475 " + clt.nick.string + " " + channel_nombres[i] + " :Cannot join channel (+k)";
-					send_msg(clt.fd, error, 2);
-					continue ;
-				}
-			}
-			chl.clt_fds.insert(clt.fd);
-			clt.channels.insert(channel_nombres[i]);
-			chl.clt_counter += 1;
-			send_channel_msg(channel_nombres[i], clt, "", "JOIN");
-			send_msg(0,"",3);
-			join_detail(chl, clt);
+			if(join_channel(clt,chl,channel_passaggio,channel_nombres,i) == false)
+				continue;
 		}
 	}
 }
@@ -351,8 +357,6 @@ void	Channel::handle_kick(std::vector<std::string> split_msg, t_client &clt, std
 	}
 }
 
-// TOPIC #42  :topic 
-
 void	Channel::handle_topic(std::vector<std::string> split_msg, t_client &clt, std::string cmd)
 {
 	std::string error;
@@ -389,6 +393,118 @@ void	Channel::handle_topic(std::vector<std::string> split_msg, t_client &clt, st
 	send_channel_msg(split_msg[1],clt,topic,"TOPIC");
 }
 
+void Channel::mode_check(t_client &clt,t_channel &chl,std::string str)
+{
+	std::string response = ":IRC 324 " + clt.nick.string + " " + str + " +";
+	if(chl.invite_only == true)
+		response += "i";
+	if(chl.topic_change == true)
+		response += "t";
+	if(chl.password.exists == true)
+		response += "k";
+	if(chl.user_limit_bool == true)
+		response += "l";
+	if(chl.password.exists == true)
+		response += " " + chl.password.string;
+	if(chl.user_limit_bool == true)
+	{
+		std::ostringstream ss;
+		ss << chl.user_limit;
+		std::string s = ss.str();
+		response += " " + s;
+	}
+	response += "\r\n";
+	send(clt.fd,response.c_str(),response.size(),0);
+}
+
+bool Channel::mode_operator(bool mode,std::vector<std::string> split_msg,t_client &clt,t_channel &chl,size_t *j)
+{
+	std::string msg;
+	
+	if(mode == true)
+	{
+		if(split_msg.size() > (*j) && split_msg[(*j)].empty() == false)
+		{
+			int clt_fd = this->client_ptr->get_client_fd(split_msg[(*j)]);
+			if (clt_fd == -1 || chl.clt_fds.find(clt_fd) == chl.clt_fds.end())
+			{
+				msg = ":server 401 " + clt.nick.string + " " + split_msg[(*j)] + " :No such nick";
+				send_msg(clt.fd, msg, 2);
+				(*j)++;
+				return (false);
+			}
+			chl.admins.insert(clt_fd);
+			msg = " +o " + split_msg[(*j)];
+			send_channel_msg(chl.name,clt,msg,"MODE");
+			(*j)++;
+		}
+		else
+			send_server_msg(clt.fd, "Missing nickname to give operator");
+	}
+	else
+	{
+		if(split_msg.size() > (*j) && split_msg[(*j)].empty() == false)
+		{
+			int clt_fd = this->client_ptr->get_client_fd(split_msg[(*j)]);
+			if (clt_fd == -1 || chl.clt_fds.find(clt_fd) == chl.clt_fds.end())
+			{
+				send_server_msg(clt.fd, "Nickname not found");
+				(*j)++;
+				return (false);
+			}
+			if(check_admin(chl,clt_fd) == false)
+			{
+				send_msg(clt.fd,split_msg[(*j)],0);
+				send_msg(clt.fd," is not an operator in channel ",1);
+				send_msg(clt.fd,chl.name,2);
+				(*j)++;
+				return (false);
+			}
+			chl.admins.erase(clt_fd);
+			std::string response = " -o " + split_msg[(*j)];
+			send_channel_msg(chl.name,clt,response,"MODE");
+			(*j)++;
+		}
+		else
+			send_server_msg(clt.fd, "Missing nickname to remove operator");
+	}
+	return (true);
+}
+
+bool Channel::mode_limit(bool mode,std::vector<std::string> split_msg,t_client &clt,t_channel &chl,size_t *j)
+{
+	std::string msg;
+
+	if(mode == true)
+	{
+		if(split_msg.size() > (*j) && split_msg[(*j)].empty() == false)
+		{
+			if(split_msg[(*j)].find_first_not_of("0123456789") != std::string::npos)
+			{
+				send_server_msg(clt.fd,"Invalid limit amount");
+				(*j)++;
+				return(false);
+			}
+			long u_limit = atol(split_msg[(*j)].c_str());
+			if(u_limit > std::numeric_limits<int>::max())
+			{
+				split_msg[(*j)] = "2147483647";
+				u_limit = std::numeric_limits<int>::max();
+			}
+			chl.user_limit = u_limit;
+			msg = " +l " + split_msg[(*j)];
+			send_channel_msg(chl.name, clt, msg, "MODE");
+			(*j)++;
+		}
+		else
+			send_server_msg(clt.fd, "Missing user limit");
+	}
+	else
+		send_channel_msg(chl.name, clt, "-l", "MODE");
+	chl.user_limit_bool = mode;
+	return(true);
+}
+
 void	Channel::handle_mode(std::vector<std::string> split_msg,t_client &clt)
 {
 	std::string msg;
@@ -407,26 +523,7 @@ void	Channel::handle_mode(std::vector<std::string> split_msg,t_client &clt)
 	}
 	if (split_msg.size() < 3)
 	{
-		std::string response = ":IRC 324 " + clt.nick.string + " " + split_msg[1] + " +";
-		if(chl.invite_only == true)
-			response += "i";
-		if(chl.topic_change == true)
-			response += "t";
-		if(chl.password.exists == true)
-			response += "k";
-		if(chl.user_limit_bool == true)
-			response += "l";
-		if(chl.password.exists == true)
-			response += " " + chl.password.string;
-		if(chl.user_limit_bool == true)
-		{
-			std::ostringstream ss;
-			ss << chl.user_limit;
-			std::string s = ss.str();
-			response += " " + s;
-		}
-		response += "\r\n";
-		send(clt.fd,response.c_str(),response.size(),0);
+		mode_check(clt,chl,split_msg[1]);
 		return ;
 	}
 	if(split_msg[2][0] != '+' && split_msg[2][0] != '-')
@@ -485,83 +582,13 @@ void	Channel::handle_mode(std::vector<std::string> split_msg,t_client &clt)
 			}
 			else if (split_msg[2][i] == 'o')
 			{
-				if(mode == true)
-				{
-					if(split_msg.size() > j && split_msg[j].empty() == false)
-					{
-						int clt_fd = this->client_ptr->get_client_fd(split_msg[j]);
-						if (clt_fd == -1 || chl.clt_fds.find(clt_fd) == chl.clt_fds.end())
-						{
-							msg = ":server 401 " + clt.nick.string + " " + split_msg[j] + " :No such nick";
-							send_msg(clt.fd, msg, 2);
-							j++;
-							continue;
-						}
-						chl.admins.insert(clt_fd);
-						msg = " +o " + split_msg[j];
-						send_channel_msg(chl.name,clt,msg,"MODE");
-						j++;
-					}
-					else
-						send_server_msg(clt.fd, "Missing nickname to give operator");
-				}
-				else
-				{
-					if(split_msg.size() > j && split_msg[j].empty() == false)
-					{
-						int clt_fd = this->client_ptr->get_client_fd(split_msg[j]);
-						if (clt_fd == -1 || chl.clt_fds.find(clt_fd) == chl.clt_fds.end())
-						{
-							send_server_msg(clt.fd, "Nickname not found");
-							j++;
-							continue;
-						}
-						if(check_admin(chl,clt_fd) == false)
-						{
-							send_msg(clt.fd,split_msg[j],0);
-							send_msg(clt.fd," is not an operator in channel ",1);
-							send_msg(clt.fd,chl.name,2);
-							j++;
-							continue;
-						}
-						chl.admins.erase(clt_fd);
-						std::string response = " -o " + split_msg[j];
-						send_channel_msg(chl.name,clt,response,"MODE");
-						j++;
-					}
-					else
-						send_server_msg(clt.fd, "Missing nickname to remove operator");
-				}
+				if(mode_operator(mode,split_msg,clt,chl,&j) == false)
+					continue;
 			}
 			else if (split_msg[2][i] == 'l')
 			{
-				if(mode == true)
-				{
-					if(split_msg.size() > j && split_msg[j].empty() == false)
-					{
-						if(split_msg[j].find_first_not_of("0123456789") != std::string::npos)
-						{
-							send_server_msg(clt.fd,"Invalid limit amount");
-							j++;
-							continue;
-						}
-						long u_limit = atol(split_msg[j].c_str());
-						if(u_limit > std::numeric_limits<int>::max())
-						{
-							split_msg[j] = "2147483647";
-							u_limit = std::numeric_limits<int>::max();
-						}
-						chl.user_limit = u_limit;
-						msg = " +l " + split_msg[j];
-						send_channel_msg(chl.name, clt, msg, "MODE");
-						j++;
-					}
-					else
-						send_server_msg(clt.fd, "Missing user limit");
-				}
-				else
-					send_channel_msg(chl.name, clt, "-l", "MODE");
-				chl.user_limit_bool = mode;
+				if(mode_limit(mode,split_msg,clt,chl,&j) == false)
+					continue;
 			}
 			else
 				send_server_msg(clt.fd, "Invalid channel mode");
@@ -624,8 +651,6 @@ void Channel::handle_who(std::vector<std::string> split_msg, t_client &clt)
 		send_server_msg(clt.fd, "Not in channel");
 		return ;
 	}
-	// :server 352 bob #general alice 127.0.0.1 irc.example.com alice H@ :0 Alice Smith
-
 	std::set<int>::iterator it = chl.clt_fds.begin();
 	for(; it != chl.clt_fds.end(); it++)
 	{
