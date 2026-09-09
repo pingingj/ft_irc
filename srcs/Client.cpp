@@ -6,7 +6,7 @@
 /*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/09 15:03:18 by finn             ###   ########.fr       */
+/*   Updated: 2026/09/09 15:11:14 by finn             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,7 +85,6 @@ void Client::sendHelp(t_client clt)
 
 void Client::handle_pass(std::vector<std::string> split_msg, t_client &clt, std::string s_pass)
 {
-	std::cout << "HERE\n";
 	if (clt.c_pass == true)
 	{
 		send_server_msg(clt.fd, "Already logged in");
@@ -215,11 +214,6 @@ bool Server::handle_command(std::string command, t_client &clt)
 {
 	std::vector<std::string> split_msg;
 	split_msg = split_char(command, ' ');
-	std::cout << "Msg size: " << split_msg.size() << std::endl;
-	for (size_t i = 0; i < split_msg.size(); i++)
-	{
-		std::cout << "args: " << split_msg[i] << std::endl;
-	}
 	if (split_msg[0] == "HELP")
 	{
 		if (split_msg.size() != 1)
@@ -248,7 +242,6 @@ bool Server::handle_command(std::string command, t_client &clt)
 		this->_channel.channel_commands(split_msg, clt, command);
 	else
 		send_server_msg(clt.fd, "Unknown command");
-	std::cout << "splitmsg !!" << split_msg[0] << "!!" << std::endl;
 	if(clt.registered == false && clt.nick.exists && clt.user.exists && clt.c_pass)
 	{
 		clt.registered = true;
@@ -279,7 +272,6 @@ bool Client::search_client_list(std::string inoa, t_client &clt, std::string msg
 
 int Client::get_client_fd(std::string nick)
 {
-	std::cout << "Searching " << nick << std::endl;
 	std::map<std::string,int>::iterator it = this->_nicks.find(nick);
 	if(it != this->_nicks.end())
 		return(it->second);
@@ -292,17 +284,14 @@ void Server::read_buffer(char *buffer, int fd, int bytes)
 	clt->buffer.append(buffer, bytes);
 	if (clt->buffer.find("\r\n") == std::string::npos)
 		return ;
-	std::cout << "REAL BUFFER LOL " << clt->buffer << std::endl;
 	commands = split_string(clt->buffer, "\r\n");
 	if (commands[0].empty())
 	{
 		clt->buffer.erase(clt->buffer.begin(), clt->buffer.end());
 		return ;
 	}
-	std::cout << "command size: " << commands.size() << std::endl;
 	for (size_t i = 0; i < commands.size(); i++)
 	{
-		std::cout << "Command: " << commands.at(i) << std::endl;
 		if (this->handle_command(commands[i], *clt) == false)
 			return ;
 	}

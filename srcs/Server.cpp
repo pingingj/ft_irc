@@ -6,7 +6,7 @@
 /*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:43 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/09 15:09:08 by finn             ###   ########.fr       */
+/*   Updated: 2026/09/09 15:10:31 by finn             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -118,7 +118,6 @@ void	Server::server(char *port)
 					send_server_msg(fd,"Message to big");
 				else if (bytes <= 0) 
 				{
-					std::cout << "oi";
 					t_client *clt = this->_client.get_client(fd);
 					clt->disconnected = true;
 					this->_channel.disconnect_channels(*clt, epfd);
@@ -126,14 +125,12 @@ void	Server::server(char *port)
 				else 
 				{
 					buffer[bytes] = '\0';
-					// std::cout << "Server: " << buffer;
 					this->read_buffer(buffer,fd, bytes);
 					
 				}
 			}
 		}
 	}
-	std::cout << "???" << std::endl;
 	close(ServerSocket);
 }
 
