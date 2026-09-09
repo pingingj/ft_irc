@@ -6,7 +6,7 @@
 /*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:43 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/09 15:10:31 by finn             ###   ########.fr       */
+/*   Updated: 2026/09/09 16:54:40 by finn             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,7 +115,12 @@ void	Server::server(char *port)
 				char buffer[1024];
 				int bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
 				if(bytes > 512)
+				{
 					send_server_msg(fd,"Message to big");
+					t_client *clt = this->_client.get_client(fd);
+					clt->buffer.erase(clt->buffer.begin(), clt->buffer.end());
+
+				}
 				else if (bytes <= 0) 
 				{
 					t_client *clt = this->_client.get_client(fd);
