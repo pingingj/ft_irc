@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/09 15:11:14 by finn             ###   ########.fr       */
+/*   Updated: 2026/09/09 17:26:34 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -213,6 +213,8 @@ void Client::handle_fast2(t_client &clt)
 bool Server::handle_command(std::string command, t_client &clt)
 {
 	std::vector<std::string> split_msg;
+	if(command.empty())
+		return(false);
 	split_msg = split_char(command, ' ');
 	if (split_msg[0] == "HELP")
 	{
