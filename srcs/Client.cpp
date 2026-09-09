@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
+/*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/09 13:52:39 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/09/09 15:03:18 by finn             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,7 +68,7 @@ void Client::sendHelp(t_client clt)
 		send_server_msg(clt.fd,"PART -> /PART <channel_name>,(<channel_name>) :to leave a channel");
 		send_server_msg(clt.fd,"PRIVMSG -> /PRIVMSG <nick_name/channel_name>,(<nickname/channel_name>) :to send a privmsg to a channel/user");
 		send_server_msg(clt.fd,"WHO -> /WHO <channel_name> :to check users in the channel");
-		send_server_msg(clt.fd,"\nOPERATOR COMMANDS:");
+		send_msg(clt.fd,"\nOPERATOR COMMANDS:",2);
 		send_server_msg(clt.fd,"KICK -> /KICK <channel_name> <nickname> (reason) :to kick a user from a channel");
 		send_server_msg(clt.fd,"INVITE -> /INVITE <nickname> <channel_name> :to invite user to a channel");
 		send_server_msg(clt.fd,"TOPIC -> /TOPIC <channel_name> (<new_topic>) :to see/(change) the channel topic");
@@ -79,7 +79,7 @@ void Client::sendHelp(t_client clt)
 		send_server_msg(clt.fd,"User is not registered!\nFollow these steps to register:");
 		send_server_msg(clt.fd,"Step 1: Enter server password with [PASS (server_password)] ");
 		send_server_msg(clt.fd,"Step 2: Enter a unique nick name with [NICK (your_nickname)] ");
-		send_server_msg(clt.fd,"Step 3: Enter a username with [USER (your_username)] ");
+		send_server_msg(clt.fd,"Step 3: Enter a username with [USER (<username> <hostname> <servername> <realname>)] ");
 	}
 }
 

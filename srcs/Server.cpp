@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
+/*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:43 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/09 13:51:17 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/09/09 15:03:24 by finn             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -141,6 +141,26 @@ void	Server::server(char *port)
 	close(ServerSocket);
 }
 
+bool parseport(char *av)
+{
+	std::string port(av);
+	if(port.empty())
+	{
+		std::cerr << "Error: Empty server port" << std::endl;
+		return(false);
+	}
+	if(port.size() != 4)
+		std::cerr << "Error: Invalid port (4 numbers)" << std::endl;
+	for(size_t i = 0;i < port.size();i++)
+	{
+		if(!isalnum(port[i]))
+		{
+			std::cerr << "Error: Invalid port, must be alpha numeric" << std::endl;
+			return(false);
+		}
+	}
+}
+
 bool parseword(char *av)
 {
 	std::string pass(av);
@@ -162,6 +182,7 @@ bool parseword(char *av)
 	}
 	return (true);
 }
+
 int main(int ac, char *av[])
 {
 	if(ac != 3)
@@ -171,7 +192,7 @@ int main(int ac, char *av[])
 	}
 	try
 	{
-		if(!parseword(av[2]))
+		if(parseword(av[2]) == false && parseport(av[1]) == false)
 			return(1);
 		struct sigaction sign;
 		sign.sa_handler = &action_handler;
