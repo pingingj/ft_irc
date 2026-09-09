@@ -6,7 +6,7 @@
 /*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:43 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/09 15:03:24 by finn             ###   ########.fr       */
+/*   Updated: 2026/09/09 15:09:08 by finn             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -122,10 +122,6 @@ void	Server::server(char *port)
 					t_client *clt = this->_client.get_client(fd);
 					clt->disconnected = true;
 					this->_channel.disconnect_channels(*clt, epfd);
-					std::cout << "USER DISCONNECTED" << std::endl;
-					epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL);
-					this->_client.remove_client(fd);
-					std::cout << " boi";
 				}
 				else 
 				{
@@ -159,6 +155,7 @@ bool parseport(char *av)
 			return(false);
 		}
 	}
+	return(true);
 }
 
 bool parseword(char *av)
