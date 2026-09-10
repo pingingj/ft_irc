@@ -6,7 +6,7 @@
 /*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/11 15:09:52 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/10 19:12:03 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/09/10 19:34:25 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -636,6 +636,12 @@ void	Channel::handle_invite(std::vector<std::string> split_msg, t_client &clt)
 	// 	send_msg(clt.fd, error, 2);
 	// 	return;
 	// }
+	if (clt.channels.find(split_msg[2]) == clt.channels.end())
+	{
+		error = ":server 442 " + clt.nick.string + " " + split_msg[1] + " :You're not on that channel";
+		send_msg(clt.fd,error,2);
+		return;
+	}
 	t_channel &chl = this->channels[split_msg[2]];
 	int cur_fd = this->client_ptr->get_client_fd(split_msg[1]);
 	if (cur_fd == -1)
@@ -647,12 +653,6 @@ void	Channel::handle_invite(std::vector<std::string> split_msg, t_client &clt)
 	if(chl.clt_fds.find(cur_fd) != chl.clt_fds.end())
 	{
 		error = ":server 443 " + clt.nick.string + " " + split_msg[1] + " :Is already on channel";
-		send_msg(clt.fd,error,2);
-		return;
-	}
-	if (chl.clt_fds.find(clt.fd) == chl.clt_fds.end())
-	{
-		error = ":server 442 " + clt.nick.string + " " + split_msg[1] + " :You're not on that channel";
 		send_msg(clt.fd,error,2);
 		return;
 	}
@@ -733,6 +733,8 @@ void	Channel::disconnect_channels(t_client &clt, int epfd)
 	vec.push_back(channel);
 	for (inv_it = clt.invitations.begin(); inv_it != clt.invitations.end(); inv_it++)
 	{
+		if(this->channels.find(*inv_it) == this->channels.end())
+			continue;
 		t_channel &chl = this->channels[*inv_it];
 		chl.whitelist.erase(clt.fd);
 	}
