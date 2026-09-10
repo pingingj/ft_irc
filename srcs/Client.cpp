@@ -6,7 +6,7 @@
 /*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/10 14:12:35 by dpaes-so         ###   ########.fr       */
+/*   Updated: 2026/09/10 15:38:50 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -288,5 +288,5 @@ void Server::read_buffer(char *buffer, int fd, int bytes)
 		if (this->handle_command(commands[i], *clt) == false)
 			return ;
 	}
-	clt->buffer.erase(clt->buffer.begin(), clt->buffer.end());
+	clt->buffer.erase(clt->buffer.begin(), clt->buffer.begin() + clt->buffer.find("\r\n") + 2);
 }
