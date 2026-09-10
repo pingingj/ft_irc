@@ -6,7 +6,7 @@
 /*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/10 18:52:12 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/09/10 19:36:06 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -307,7 +307,7 @@ void Server::read_buffer(char *buffer, int fd, int bytes)
 			send_server_msg(fd,"Message to big");
 			t_client *clt = this->_client.get_client(fd);
 			clt->buffer.erase(clt->buffer.begin(), clt->buffer.end());
-			continue;
+			return;
 		}
 		clt->buffer.erase(0, end + 2);
 
