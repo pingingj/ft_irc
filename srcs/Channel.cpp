@@ -6,7 +6,7 @@
 /*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/11 15:09:52 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/10 19:39:59 by finn             ###   ########.fr       */
+/*   Updated: 2026/09/10 19:55:45 by finn             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -124,6 +124,8 @@ bool Channel::join_channel(t_client &clt,t_channel &chl,std::vector<std::string>
 		(*channel_passaggio).erase((*channel_passaggio).begin());
 	chl.clt_fds.insert(clt.fd);
 	clt.channels.insert(channel_nombres[i]);
+	chl.whitelist.erase(clt.fd);
+	clt.invitations.erase(channel_nombres[i]);
 	chl.clt_counter += 1;
 	send_channel_msg(channel_nombres[i], clt, "", "JOIN");
 	send_msg(0,"",3);
@@ -216,7 +218,7 @@ void	Channel::handle_part(std::vector<std::string> split_msg, t_client &clt,bool
 		{
 			error = ":server 442 " + clt.nick.string + " " + chl_names[i] + " :You're not on that channel";
 			send_msg(clt.fd, error, 2);
-			return ;
+			continue;
 		}
 		send_channel_msg(chl_names[i], clt, "", split_msg[0]);
 		clt.channels.erase(chl_names[i]);
