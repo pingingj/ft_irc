@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/11 15:09:52 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/10 17:25:34 by dpaes-so         ###   ########.fr       */
+/*   Updated: 2026/09/10 18:40:52 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -120,6 +120,8 @@ bool Channel::join_channel(t_client &clt,t_channel &chl,std::vector<std::string>
 			return(false) ;
 		}
 	}
+	if ((*channel_passaggio).size() > 0)
+		(*channel_passaggio).erase((*channel_passaggio).begin());
 	chl.clt_fds.insert(clt.fd);
 	clt.channels.insert(channel_nombres[i]);
 	chl.clt_counter += 1;
@@ -624,7 +626,7 @@ void	Channel::handle_invite(std::vector<std::string> split_msg, t_client &clt)
 	std::string error;
 	if (split_msg.size() < 3)
 	{
-		error = ":server 461 " + clt.nick.string + " INVITIE :Not enough parameters";
+		error = ":server 461 " + clt.nick.string + " INVITE :Not enough parameters";
 		send_msg(clt.fd, error, 2);
 		return ;
 	}
