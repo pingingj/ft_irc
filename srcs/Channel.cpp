@@ -6,7 +6,7 @@
 /*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/11 15:09:52 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/10 18:40:52 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/09/10 19:12:03 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -663,7 +663,10 @@ void	Channel::handle_invite(std::vector<std::string> split_msg, t_client &clt)
 		return;
 	}
 	if(chl.invite_only == true)
+	{
+		clt.invitations.insert(chl.name);
 		chl.whitelist.insert(cur_fd);
+	}
 	send_channel_msg(chl.name, clt, split_msg[1], "INVITE");
 	std::string msg = "You have been invited to the channel " + chl.name; 
 	send_msg(cur_fd,msg,2);
@@ -721,12 +724,18 @@ void Channel::channel_commands(std::vector<std::string> split_msg, t_client &clt
 void	Channel::disconnect_channels(t_client &clt, int epfd)
 {
 	std::set<std::string>::iterator c_it;
+	std::set<std::string>::iterator inv_it;
 	std::vector <std::string> vec;
 	std::string	channel;
 	vec.push_back("DISCONNECT");
 	for (c_it = clt.channels.begin(); c_it != clt.channels.end();c_it++)
 		channel += *c_it + ",";
 	vec.push_back(channel);
+	for (inv_it = clt.invitations.begin(); inv_it != clt.invitations.end(); inv_it++)
+	{
+		t_channel &chl = this->channels[*inv_it];
+		chl.whitelist.erase(clt.fd);
+	}
 	this->handle_part(vec, clt,true);
 	std::cout << "USER DISCONNECTED" << std::endl;
 	epoll_ctl(epfd, EPOLL_CTL_DEL, clt.fd, NULL);

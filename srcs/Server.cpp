@@ -6,7 +6,7 @@
 /*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:43 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/10 18:50:27 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/09/10 19:12:46 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -127,12 +127,14 @@ void	Server::server(char *port)
 			{
 				char buffer[1024];
 				int bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
-				if (bytes <= 0) 
+				if (bytes == 0) 
 				{
 					t_client *clt = this->_client.get_client(fd);
 					clt->disconnected = true;
 					this->_channel.disconnect_channels(*clt, epfd);
 				}
+				else if (bytes < 0)
+					continue ;
 				else 
 				{
 					buffer[bytes] = '\0';
