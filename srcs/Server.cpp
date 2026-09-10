@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:43 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/09 17:59:06 by dpaes-so         ###   ########.fr       */
+/*   Updated: 2026/09/10 13:05:03 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -151,15 +151,24 @@ bool parseport(char *av)
 		std::cerr << "Error: Empty server port" << std::endl;
 		return(false);
 	}
-	if(port.size() != 4)
-		std::cerr << "Error: Invalid port (4 numbers)" << std::endl;
+	if(port.size() < 1 || port.size() > 5)
+	{
+		std::cerr << "Error: Invalid port" << std::endl;
+		return (false);
+	}
 	for(size_t i = 0;i < port.size();i++)
 	{
-		if(!isalnum(port[i]))
+		if(!isdigit(port[i]))
 		{
-			std::cerr << "Error: Invalid port, must be alpha numeric" << std::endl;
+			std::cerr << "Error: Invalid port, must be only digits" << std::endl;
 			return(false);
 		}
+	}
+	int porti = atoi(av);
+	if (porti < 1 ||  porti > 65535)
+	{
+		std::cerr << "Error: Invalid port" << std::endl;
+		return (false);
 	}
 	return(true);
 }
@@ -195,7 +204,7 @@ int main(int ac, char *av[])
 	}
 	try
 	{
-		if(parseword(av[2]) == false && parseport(av[1]) == false)
+		if(parseword(av[2]) == false || parseport(av[1]) == false)
 			return(1);
 		struct sigaction sign;
 		sign.sa_handler = &action_handler;

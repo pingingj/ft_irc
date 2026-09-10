@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_irc.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:47 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/09 18:22:25 by dpaes-so         ###   ########.fr       */
+/*   Updated: 2026/09/10 13:40:23 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,10 +97,10 @@ class Client
 		void		handle_pass(std::vector<std::string> split_msg, t_client &clt, std::string s_pass);
 		void		handle_user(std::vector<std::string> split_msg, t_client &clt, std::string cmd);
 		void		handle_nick(std::vector<std::string> split_msg, t_client &clt);
-		void		handle_fast(t_client &clt);
-		void		handle_fast2(t_client &clt);
 		bool		search_client_list(std::string str, t_client &clt, std::string msg);
 		int			get_client_fd(std::string nick);
+		// void		handle_fast(t_client &clt);
+		// void		handle_fast2(t_client &clt);
 };
 
 
