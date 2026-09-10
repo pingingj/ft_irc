@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/10 17:05:58 by dpaes-so         ###   ########.fr       */
+/*   Updated: 2026/09/10 18:22:43 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -302,7 +302,7 @@ void Server::read_buffer(char *buffer, int fd, int bytes)
 	while ((end = clt->buffer.find("\r\n")) != std::string::npos)
 	{
 		std::string command = clt->buffer.substr(0, end);
-		if(bytes > 510)
+		if(command.size() > 510)
 		{
 			send_server_msg(fd,"Message to big");
 			t_client *clt = this->_client.get_client(fd);

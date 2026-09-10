@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:43 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/10 17:12:11 by dpaes-so         ###   ########.fr       */
+/*   Updated: 2026/09/10 18:20:40 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,16 +101,16 @@ void	Server::server(char *port)
 
 			if (events[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP))
 			{
-				epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL);
 				t_client *clt = this->_client.get_client(fd);
 				if (clt != NULL)
 					this->_channel.disconnect_channels(*clt, epfd);
-				close(fd);
 				continue;
 			}
 			if (fd == ServerSocket)
 			{
 				int client_fd = accept(ServerSocket, NULL, NULL);
+				if (client_fd < 0)
+					continue;
 				if(fcntl(client_fd, F_SETFL, O_NONBLOCK) == -1)
 				{
 					close(client_fd);
