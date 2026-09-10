@@ -6,7 +6,7 @@
 /*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/10 15:38:50 by dpaes-so         ###   ########.fr       */
+/*   Updated: 2026/09/10 15:55:12 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -155,7 +155,7 @@ void Client::handle_nick(std::vector<std::string> split_msg, t_client &clt)
 	else if (split_msg[1].size() > 9)
 	{
 		send_server_msg(clt.fd, "NICKNAME too massive");
-		clt.nick.string = split_msg[1];
+		return;
 	}
 	else if (this->_nicks.find(split_msg[1]) != this->_nicks.end())
 	{
@@ -270,23 +270,23 @@ int Client::get_client_fd(std::string nick)
 		return(it->second);
 	return(-1);
 }
+
 void Server::read_buffer(char *buffer, int fd, int bytes)
 {
-	std::vector<std::string> commands;
 	t_client *clt = this->_client.get_client(fd);
 	clt->buffer.append(buffer, bytes);
-	if (clt->buffer.find("\r\n") == std::string::npos)
-		return ;
-	commands = split_string(clt->buffer, "\r\n");
-	if (commands[0].empty())
+
+	size_t end;
+
+	while ((end = clt->buffer.find("\r\n")) != std::string::npos)
 	{
-		clt->buffer.erase(clt->buffer.begin(), clt->buffer.end());
-		return ;
+		std::string command = clt->buffer.substr(0, end);
+		clt->buffer.erase(0, end + 2);
+
+		if (command.empty())
+			continue;
+
+		if (this->handle_command(command, *clt) == false)
+			return;
 	}
-	for (size_t i = 0; i < commands.size(); i++)
-	{
-		if (this->handle_command(commands[i], *clt) == false)
-			return ;
-	}
-	clt->buffer.erase(clt->buffer.begin(), clt->buffer.begin() + clt->buffer.find("\r\n") + 2);
 }

@@ -6,7 +6,7 @@
 /*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/11 15:09:52 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/10 14:07:16 by dpaes-so         ###   ########.fr       */
+/*   Updated: 2026/09/10 15:51:58 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -349,11 +349,13 @@ void	Channel::handle_kick(std::vector<std::string> split_msg, t_client &clt, std
 			msg = cur_nick->nick.string + " " + reason;
 		send_channel_msg(split_msg[1], clt, msg,"KICK");
 		cur_nick->channels.erase(split_msg[1]);
-		this->channels[split_msg[1]].clt_counter--;
-		this->channels[split_msg[1]].clt_fds.erase(cur_nick->fd);
-		this->channels[split_msg[1]].whitelist.erase(cur_nick->fd);
-		if (this->check_admin(this->channels[split_msg[1]], cur_nick->fd) == true)
-			this->channels[split_msg[1]].admins.erase(cur_nick->fd);
+		chl.clt_counter--;
+		chl.clt_fds.erase(cur_nick->fd);
+		chl.whitelist.erase(cur_nick->fd);
+		if (this->check_admin(chl, cur_nick->fd) == true)
+			chl.admins.erase(cur_nick->fd);
+		if (chl.clt_counter <= 0)
+			this->channels.erase(chl.name);
 	}
 }
 
@@ -507,7 +509,10 @@ bool Channel::mode_limit(bool mode,std::vector<std::string> split_msg,t_client &
 			(*j)++;
 		}
 		else
+		{
 			send_server_msg(clt.fd, "Missing user limit");
+			return (false);
+		}
 	}
 	else
 		send_channel_msg(chl.name, clt, "-l", "MODE");
