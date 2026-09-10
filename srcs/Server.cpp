@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
+/*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:43 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/10 19:12:46 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/09/10 19:44:40 by finn             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -130,6 +130,8 @@ void	Server::server(char *port)
 				if (bytes == 0) 
 				{
 					t_client *clt = this->_client.get_client(fd);
+					if(clt == NULL)
+						continue;
 					clt->disconnected = true;
 					this->_channel.disconnect_channels(*clt, epfd);
 				}

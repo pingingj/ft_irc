@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
+/*   By: finn <finn@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/10 19:36:06 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/09/10 19:43:22 by finn             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -231,6 +231,8 @@ bool Server::handle_command(std::string command, t_client &clt)
 	if(command.empty())
 		return(false);
 	split_msg = split_char(command, ' ');
+	if(split_msg.empty())
+		return(true);
 	if (split_msg[0] == "HELP")
 	{
 		if (split_msg.size() != 1)
