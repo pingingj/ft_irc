@@ -6,7 +6,7 @@
 /*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/11 15:09:52 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/09 18:33:43 by dpaes-so         ###   ########.fr       */
+/*   Updated: 2026/09/10 14:07:16 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -367,8 +367,19 @@ void	Channel::handle_topic(std::vector<std::string> split_msg, t_client &clt, st
 		return ;
 	}
 	std::string topic;
+	t_channel &chl = this->channels[split_msg[1]];
 	if (split_msg.size() < 3)
-		topic = split_msg[1];
+	{
+		if(chl.topic.empty())
+		{
+			error = ":server 331 " + clt.nick.string + " " + chl.name + " :No topic is set";
+			send_msg(clt.fd, error, 2);
+			return;
+		}
+		error = ":server 332 " + clt.nick.string + " " + chl.name + " :" + chl.topic;
+		send_msg(clt.fd, error, 2);
+		return;
+	}
 	else
 	{
 		if (split_msg[2][0] == ':')
@@ -376,7 +387,6 @@ void	Channel::handle_topic(std::vector<std::string> split_msg, t_client &clt, st
 		else
 			topic = split_msg[2];
 	}
-	t_channel &chl = this->channels[split_msg[1]];
 	if(chl.name.empty() || chl.clt_fds.find(clt.fd) == chl.clt_fds.end())
 	{
 		error = ":server 442 " + clt.nick.string + " " + chl.name + " :You're not on that channel";

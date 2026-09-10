@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
+/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/10 13:39:50 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/09/10 14:12:35 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -147,7 +147,7 @@ void Client::handle_nick(std::vector<std::string> split_msg, t_client &clt)
 		msg = ":server 461 " + clt.nick.string + " NICK :Not enough parameters";
 		send_msg(clt.fd, msg, 2);
 	}
-	else if (str_isalnum(split_msg[1]) == false)
+	else if (isalpha(split_msg[1][0]) == false || str_isalnum(split_msg[1]) == false)
 	{
 		std::string msg = ":server 432 * " + split_msg[1] +  " " + ":Erroneous nickname";
 		send_msg(clt.fd,msg,2);
