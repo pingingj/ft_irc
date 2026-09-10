@@ -6,7 +6,7 @@
 /*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:43 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/10 18:20:40 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/09/10 18:50:27 by dgarcez-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -185,7 +185,10 @@ bool parseword(char *av)
 		return(false);
 	}
 	if(pass.size() > 64)
+	{
 		std::cerr << "Error: Server Password too massive" << std::endl;
+		return (false);
+	}
 	for(size_t i = 0;i < pass.size();i++)
 	{
 		if(!isalnum(pass[i]))
