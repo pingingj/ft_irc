@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_irc.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgarcez- < dgarcez-@student.42lisboa.com > +#+  +:+       +#+        */
+/*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:47 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/10 13:40:23 by dgarcez-         ###   ########.fr       */
+/*   Updated: 2026/09/10 17:26:05 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,14 +79,17 @@ typedef struct s_channel
 	size_t clt_counter;
 } t_channel;
 
+class Channel;
+
 class Client
 {
 	private:
 		std::map<int, t_client> _clients;
 		std::map<std::string,int> _nicks;
-
+		Channel *channel_ptr;
 	public:
 		Client();
+		Client(Channel *channel);
 		Client(const Client &obj);
 		Client &operator=(const Client &obj);
 		~Client();
@@ -99,6 +102,7 @@ class Client
 		void		handle_nick(std::vector<std::string> split_msg, t_client &clt);
 		bool		search_client_list(std::string str, t_client &clt, std::string msg);
 		int			get_client_fd(std::string nick);
+		void		change_nick(std::vector<std::string> split_msg, t_client &clt);
 		// void		handle_fast(t_client &clt);
 		// void		handle_fast2(t_client &clt);
 };
@@ -128,12 +132,11 @@ class Channel
 		void		send_channel_msg(std::string channel_name, t_client &clt, std::string msg,std::string command);
 		bool		check_admin(t_channel &chl,size_t clt_fd);
 		void 		join_detail(t_channel &chl, t_client &clt);
-		bool		join_channel(t_client &clt,t_channel &chl,std::vector<std::string> channel_passaggio,std::vector<std::string> channel_nombres,int i);
+		bool		join_channel(t_client &clt,t_channel &chl,std::vector<std::string> *channel_passaggio,std::vector<std::string> channel_nombres,int i);
 		void		mode_check(t_client &clt,t_channel &chl,std::string str);
 		bool		mode_operator(bool mode,std::vector<std::string> split_msg,t_client &clt,t_channel &chl,size_t *j);
 		bool		mode_limit(bool mode,std::vector<std::string> split_msg,t_client &clt,t_channel &chl,size_t *j);
-
-
+		std::map<std::string,t_channel> get_channels();
 };
 
 class Server

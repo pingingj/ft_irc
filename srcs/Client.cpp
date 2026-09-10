@@ -6,7 +6,7 @@
 /*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 17:58:22 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/10 15:55:12 by dpaes-so         ###   ########.fr       */
+/*   Updated: 2026/09/10 17:05:58 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,10 @@ Client::Client()
 	
 }
 
+Client::Client(Channel *channel)
+{
+	this->channel_ptr = channel;
+}
 
 Client::~Client()
 {
@@ -54,9 +58,12 @@ void Client::add_client(int fd)
 
 void Client::remove_client(int fd)
 {
-	t_client &clt = this->_clients.at(fd);
-	_nicks.erase(clt.user.string);
-	_clients.erase(clt.fd);
+	std::map<int, t_client>::iterator it = this->_clients.find(fd);
+	if (it == this->_clients.end())
+		return;
+	if (it->second.nick.exists)
+		this->_nicks.erase(it->second.nick.string);
+	this->_clients.erase(it);
 	close(fd);
 }
 
@@ -139,6 +146,19 @@ void Client::handle_user(std::vector<std::string> split_msg, t_client &clt, std:
 	clt.user.exists = true;
 }
 
+void	Client::change_nick(std::vector<std::string> split_msg, t_client &clt)
+{
+	std::set<int>::iterator fd_it;
+	std::map<std::string,t_channel> var  = this->channel_ptr->get_channels();
+	std::string response = ":" + clt.nick.string + "!" + clt.user.string + "@hostname " + "NICK " +  ":" + split_msg[1] + "\r\n";
+	for(std::set<std::string>::iterator it = clt.channels.begin();it != clt.channels.end();it++)
+	{
+		t_channel channel = var[*it];
+		for (fd_it = channel.clt_fds.begin(); fd_it != channel.clt_fds.end(); ++fd_it)
+			send(*fd_it,response.c_str(),response.size(),0);
+	}
+}
+
 void Client::handle_nick(std::vector<std::string> split_msg, t_client &clt)
 {
 	std::string msg;
@@ -165,7 +185,7 @@ void Client::handle_nick(std::vector<std::string> split_msg, t_client &clt)
 	else if (clt.nick.exists == true)
 	{
 		std::string response = ":" + clt.nick.string + "!" + clt.user.string + "@hostname " + "NICK " +  ":" + split_msg[1] + "\r\n";
-		send(clt.fd,response.c_str(),response.size(),0);
+		change_nick(split_msg,clt);
 		this->_nicks.erase(clt.nick.string);
 		this->_nicks.insert(std::make_pair(split_msg[1],clt.fd));
 		clt.nick.string = split_msg[1];
@@ -246,9 +266,10 @@ bool Server::handle_command(std::string command, t_client &clt)
 
 t_client *Client::get_client(int fd)
 {
-	if (fd == -1)
-		return (NULL);
-	return(&this->_clients.at(fd));
+	std::map<int, t_client>::iterator it = this->_clients.find(fd);
+	if (it == this->_clients.end())
+		return NULL;
+	return &it->second;
 }
 
 bool Client::search_client_list(std::string inoa, t_client &clt, std::string msg)
@@ -281,6 +302,13 @@ void Server::read_buffer(char *buffer, int fd, int bytes)
 	while ((end = clt->buffer.find("\r\n")) != std::string::npos)
 	{
 		std::string command = clt->buffer.substr(0, end);
+		if(bytes > 510)
+		{
+			send_server_msg(fd,"Message to big");
+			t_client *clt = this->_client.get_client(fd);
+			clt->buffer.erase(clt->buffer.begin(), clt->buffer.end());
+			continue;
+		}
 		clt->buffer.erase(0, end + 2);
 
 		if (command.empty())

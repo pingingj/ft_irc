@@ -6,7 +6,7 @@
 /*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:43:43 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/10 16:10:22 by dpaes-so         ###   ########.fr       */
+/*   Updated: 2026/09/10 17:12:11 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ Server::Server()
 	
 }
 
-Server::Server(std::string s_pass) : _client(), _channel(&_client)
+Server::Server(std::string s_pass) : _client(&_channel), _channel(&_client)
 {
 	this->_pass = s_pass;
 }
@@ -61,7 +61,7 @@ int	Server::serverinit(char *port)
 	int	opt = 1;
 	if (setsockopt(ServerSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)//make it so wh we lose the server we can open again faster
 		throw std::runtime_error("Error: Setsockopt failed");
-	if (bind(ServerSocket, (struct sockaddr *)&ServerAddr, sizeof(ServerAddr)) < 0)//bind the port so ony one server at a time
+	if (bind(ServerSocket, (struct sockaddr *)&ServerAddr, sizeof(ServerAddr)) < 0 || fcntl(ServerSocket, F_SETFL, O_NONBLOCK) == -1)//bind the port so ony one server at a time
 	{
 		close(ServerSocket);
 		throw std::runtime_error("Error: Bind failed\n");
@@ -102,13 +102,20 @@ void	Server::server(char *port)
 			if (events[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP))
 			{
 				epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL);
-				// this->_client.remove_client(fd)
+				t_client *clt = this->_client.get_client(fd);
+				if (clt != NULL)
+					this->_channel.disconnect_channels(*clt, epfd);
 				close(fd);
 				continue;
 			}
 			if (fd == ServerSocket)
 			{
 				int client_fd = accept(ServerSocket, NULL, NULL);
+				if(fcntl(client_fd, F_SETFL, O_NONBLOCK) == -1)
+				{
+					close(client_fd);
+					continue;
+				}
 				std::cout << "NEW USER JOINED"  << std::endl;
 				epoll_event ev;
 				ev.events = EPOLLIN;
@@ -120,13 +127,7 @@ void	Server::server(char *port)
 			{
 				char buffer[1024];
 				int bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
-				if(bytes > 512)
-				{
-					send_server_msg(fd,"Message to big");
-					t_client *clt = this->_client.get_client(fd);
-					clt->buffer.erase(clt->buffer.begin(), clt->buffer.end());
-				}
-				else if (bytes <= 0) 
+				if (bytes <= 0) 
 				{
 					t_client *clt = this->_client.get_client(fd);
 					clt->disconnected = true;

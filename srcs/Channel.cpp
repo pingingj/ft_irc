@@ -6,7 +6,7 @@
 /*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/11 15:09:52 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/10 16:09:36 by dpaes-so         ###   ########.fr       */
+/*   Updated: 2026/09/10 17:25:34 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,9 +64,12 @@ void Channel::join_detail(t_channel &chl, t_client &clt)
 			response += "@";
 		response += cur_nick->nick.string + " ";
 	}
+	std::string end = ":server 366 " + clt.nick.string + " " + chl.name + " :End of /NAMES list";
+
 	send_msg(clt.fd, response, 2);
+	send_msg(clt.fd, end, 2);
 }
-bool Channel::join_channel(t_client &clt,t_channel &chl,std::vector<std::string> channel_passaggio,std::vector<std::string> channel_nombres,int i)
+bool Channel::join_channel(t_client &clt,t_channel &chl,std::vector<std::string> *channel_passaggio,std::vector<std::string> channel_nombres,int i)
 {
 	std::string error;
 	
@@ -74,16 +77,16 @@ bool Channel::join_channel(t_client &clt,t_channel &chl,std::vector<std::string>
 	{
 		std::string msg = " Already in " + channel_nombres[i];
 		send_msg(clt.fd, msg, 2);
-		if (channel_passaggio.size() > 0)
-			channel_passaggio.erase(channel_passaggio.begin());
+		if ((*channel_passaggio).size() > 0)
+			(*channel_passaggio).erase((*channel_passaggio).begin());
 		return(false) ;
 	}
 	if (chl.user_limit_bool == true && chl.clt_counter >= chl.user_limit)
 	{
 		error = ":server 471 " + clt.nick.string + " " + channel_nombres[i] + " :Cannot join channel (+l)";
 			send_msg(clt.fd, error, 2);
-		if (channel_passaggio.size() > 0)
-			channel_passaggio.erase(channel_passaggio.begin());
+		if ((*channel_passaggio).size() > 0)
+			(*channel_passaggio).erase((*channel_passaggio).begin());
 		return(false) ;
 	}
 	if(chl.invite_only == true)
@@ -92,23 +95,23 @@ bool Channel::join_channel(t_client &clt,t_channel &chl,std::vector<std::string>
 		{
 			error = ":server 473 " + clt.nick.string + " " + channel_nombres[i] + " :Cannot join channel (+i)";
 			send_msg(clt.fd, error, 2);
-			if (channel_passaggio.size() > 0)
-				channel_passaggio.erase(channel_passaggio.begin());
+			if ((*channel_passaggio).size() > 0)
+				(*channel_passaggio).erase((*channel_passaggio).begin());
 			return(false) ;
 		}
 	}
 	if(chl.password.exists == true)
 	{
-		if(channel_passaggio.size() > 0)
+		if((*channel_passaggio).size() > 0)
 		{
-			if(channel_passaggio[0] != chl.password.string)
+			if((*channel_passaggio)[0] != chl.password.string)
 			{
 				error = ":server 475 " + clt.nick.string + " " + channel_nombres[i] + " :Cannot join channel (+k)";
 				send_msg(clt.fd, error, 2);
-				channel_passaggio.erase(channel_passaggio.begin());
+				(*channel_passaggio).erase((*channel_passaggio).begin());
 				return(false);
 			}
-			channel_passaggio.erase(channel_passaggio.begin());
+			(*channel_passaggio).erase((*channel_passaggio).begin());
 		}
 		else
 		{
@@ -187,7 +190,7 @@ void Channel::handle_join(std::vector<std::string> split_msg, t_client &clt)
 		}
 		else
 		{
-			if(join_channel(clt,chl,channel_passaggio,channel_nombres,i) == false)
+			if(join_channel(clt,chl,&channel_passaggio,channel_nombres,i) == false)
 				continue;
 		}
 	}
@@ -353,9 +356,9 @@ void	Channel::handle_kick(std::vector<std::string> split_msg, t_client &clt, std
 		chl.whitelist.erase(cur_nick->fd);
 		if (this->check_admin(chl, cur_nick->fd) == true)
 			chl.admins.erase(cur_nick->fd);
-		if (chl.clt_counter <= 0)
-			this->channels.erase(chl.name);
 	}
+	if (chl.clt_counter <= 0)
+		this->channels.erase(chl.name);
 }
 
 void	Channel::handle_topic(std::vector<std::string> split_msg, t_client &clt, std::string cmd)
@@ -625,7 +628,7 @@ void	Channel::handle_invite(std::vector<std::string> split_msg, t_client &clt)
 		send_msg(clt.fd, error, 2);
 		return ;
 	}
-	// if (this->channels.find(split_msg[1]) == this->channels.end())
+	// if (this->channels.find(split_msg[2]) == this->channels.end())
 	// {
 	// 	error = ":server 403 " + clt.nick.string + " " + split_msg[1] + ":No such channel";
 	// 	send_msg(clt.fd, error, 2);
@@ -734,3 +737,8 @@ bool	Channel::check_admin(t_channel &chl,size_t clt_fd)
 		return (false);
 	return (true);
 }
+
+std::map<std::string,t_channel> Channel::get_channels()
+{
+	return(this->channels);
+} 
