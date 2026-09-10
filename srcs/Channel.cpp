@@ -6,7 +6,7 @@
 /*   By: dpaes-so <dpaes-so@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/11 15:09:52 by dgarcez-          #+#    #+#             */
-/*   Updated: 2026/09/10 15:51:58 by dpaes-so         ###   ########.fr       */
+/*   Updated: 2026/09/10 16:09:36 by dpaes-so         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -149,7 +149,6 @@ void Channel::handle_join(std::vector<std::string> split_msg, t_client &clt)
 		channel_passaggio = split_char(split_msg[2],',');
 	for(size_t i = 0;i < channel_nombres.size();i++)
 	{
-
 		t_channel &chl = this->channels[channel_nombres[i]];
 		if ((channel_nombres[i][0] != '#' && channel_nombres[i][0] != '&') ||  std::count(channel_nombres[i].begin(), channel_nombres[i].end(), '#') > 1 || std::count(channel_nombres[i].begin(), channel_nombres[i].end(), '&') > 1)
 		{
@@ -319,13 +318,13 @@ void	Channel::handle_kick(std::vector<std::string> split_msg, t_client &clt, std
 	else if (split_msg.size() > 3)
 		reason = split_msg[3];
 	std::vector<std::string> nicknames = split_char(split_msg[2], ',');
-	t_channel &chl = this->channels[split_msg[1]];
-	if (chl.name.empty())
+	if (this->channels.find(split_msg[1]) == this->channels.end())
 	{
 		error = ":server 403 " + clt.nick.string + " " + split_msg[1] + ":No such channel";
 		send_msg(clt.fd, error, 2);
 		return;
 	}
+	t_channel &chl = this->channels[split_msg[1]];
 	if (this->check_admin(chl, clt.fd) == false)
 	{
 		error = ":server 482 " + clt.nick.string + " " + chl.name + " :You're not channel operator";
@@ -369,6 +368,12 @@ void	Channel::handle_topic(std::vector<std::string> split_msg, t_client &clt, st
 		return ;
 	}
 	std::string topic;
+	if (this->channels.find(split_msg[1]) == this->channels.end())
+	{
+		error = ":server 403 " + clt.nick.string + " " + split_msg[1] + ":No such channel";
+		send_msg(clt.fd, error, 2);
+		return;
+	}
 	t_channel &chl = this->channels[split_msg[1]];
 	if (split_msg.size() < 3)
 	{
@@ -529,13 +534,13 @@ void	Channel::handle_mode(std::vector<std::string> split_msg,t_client &clt)
 		send_server_msg(clt.fd, "Missing channel name");
 		return ;
 	}
-	t_channel &chl = this->channels[split_msg[1]];
-	if (chl.name.empty())
+	if (this->channels.find(split_msg[1]) == this->channels.end())
 	{
 		msg = ":server 442 " + clt.nick.string + " " + split_msg[1] + " :Not in the channel"; 
 		send_msg(clt.fd, msg, 2);
-		return ;
+		return;
 	}
+	t_channel &chl = this->channels[split_msg[1]];
 	if (split_msg.size() < 3)
 	{
 		mode_check(clt,chl,split_msg[1]);
@@ -620,6 +625,12 @@ void	Channel::handle_invite(std::vector<std::string> split_msg, t_client &clt)
 		send_msg(clt.fd, error, 2);
 		return ;
 	}
+	// if (this->channels.find(split_msg[1]) == this->channels.end())
+	// {
+	// 	error = ":server 403 " + clt.nick.string + " " + split_msg[1] + ":No such channel";
+	// 	send_msg(clt.fd, error, 2);
+	// 	return;
+	// }
 	t_channel &chl = this->channels[split_msg[2]];
 	int cur_fd = this->client_ptr->get_client_fd(split_msg[1]);
 	if (cur_fd == -1)
@@ -655,17 +666,19 @@ void	Channel::handle_invite(std::vector<std::string> split_msg, t_client &clt)
 
 void Channel::handle_who(std::vector<std::string> split_msg, t_client &clt)
 {
+	std::string error;
 	if (split_msg.size() < 2)
 	{
 		send_server_msg(clt.fd, "Missing channel name");
 		return ;
 	}
-	t_channel &chl = this->channels[split_msg[1]];
-	if (chl.name.empty())
+	if (this->channels.find(split_msg[1]) == this->channels.end())
 	{
-		send_server_msg(clt.fd, "Not in channel");
-		return ;
+		error = ":server 441 " + clt.nick.string + " " + split_msg[1] + ":Not in channel";
+		send_msg(clt.fd, error, 2);
+		return;
 	}
+	t_channel &chl = this->channels[split_msg[1]];
 	std::set<int>::iterator it = chl.clt_fds.begin();
 	for(; it != chl.clt_fds.end(); it++)
 	{
